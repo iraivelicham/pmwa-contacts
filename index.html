@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PMWA Contacts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+<style>
+  :root {
+    --accent: #1f6f43; --accent-weak: #e7f2ec; --accent-ink: #185a36;
+    --ink: #111827; --ink-2: #4b5563; --ink-3: #9ca3af;
+    --line: #e5e7eb; --line-2: #d1d5db; --bg: #f5f6f8; --card: #fff;
+    --danger: #b42318; --danger-weak: #fef3f2;
+    --r: 6px; --h: 32px;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 13px/1.4 Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Tamil", sans-serif; }
+  .btn i, .icon-btn i { font-size: 13px; width: 14px; text-align: center; }
+
+  /* ---------- top bar ---------- */
+  .top { background: var(--card); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+  .brand .dot { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); color: #fff; display: grid; place-items: center; font-size: 11px; }
+  .who { color: var(--ink-3); font-size: 12px; }
+  .who a { color: var(--ink-2); }
+  .spacer { flex: 1; }
+
+  /* ---------- controls ---------- */
+  .btn { height: var(--h); display: inline-flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink); border-radius: var(--r); font: inherit; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  .btn:hover { background: #f9fafb; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-ink); }
+  .btn.danger { color: var(--danger); border-color: #f4c7c3; }
+  .btn.danger:hover { background: var(--danger-weak); }
+  .btn:disabled { opacity: .55; cursor: default; }
+  .icon-btn { width: 28px; height: 28px; display: inline-grid; place-items: center; border: 1px solid transparent; background: none; border-radius: var(--r); cursor: pointer; color: var(--ink-2); text-decoration: none; }
+  .icon-btn:hover { background: #f3f4f6; border-color: var(--line); color: var(--ink); }
+  /* row action buttons: tinted, coloured, bordered */
+  .act { width: 30px; height: 28px; display: inline-grid; place-items: center; border-radius: var(--r); border: 1px solid; cursor: pointer; text-decoration: none; margin-left: 4px; transition: background .15s, color .15s; }
+  .act i { font-size: 14px; line-height: 1; }
+  .act.wa i { font-size: 16px; }
+  .act.wa { color: #128c4b; background: #e9f8ef; border-color: #b7e4c7; }
+  .act.wa:hover { background: #25d366; border-color: #25d366; color: #fff; }
+  .act.edit { color: #1d4ed8; background: #eef4ff; border-color: #c7d7fe; }
+  .act.edit:hover { background: #2563eb; border-color: #2563eb; color: #fff; }
+  .act.del { color: var(--danger); background: var(--danger-weak); border-color: #f4c7c3; }
+  .act.del:hover { background: #d92d20; border-color: #d92d20; color: #fff; }
+
+  input.inp, textarea.inp, select.inp { height: var(--h); width: 100%; padding: 0 10px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--card); color: var(--ink); font: inherit; outline: none; }
+  textarea.inp { height: auto; min-height: 56px; padding: 7px 10px; resize: vertical; }
+  .inp:focus, .ts-wrapper.focus .ts-control { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(31,111,67,.15); }
+  .search { position: relative; flex: 1 1 220px; min-width: 180px; }
+  .search i { position: absolute; font-size: 13px; left: 9px; top: 50%; transform: translateY(-50%); color: var(--ink-3); }
+  .search input { padding-left: 30px; }
+
+  /* Tom Select, restyled to match */
+  .ts-wrapper { min-width: 0; }
+  .ts-wrapper .ts-control { min-height: var(--h); padding: 3px 8px; border: 1px solid var(--line-2); border-radius: var(--r); font: inherit; box-shadow: none; background: var(--card); }
+  .ts-wrapper .ts-control { padding-right: 28px !important; position: relative; cursor: pointer; }
+  .ts-wrapper .ts-control::after { content: ""; position: absolute; right: 9px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border: 0 !important;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center / 12px no-repeat; transition: transform .15s; }
+  .ts-wrapper.dropdown-active .ts-control::after { transform: rotate(180deg); }
+  .ts-wrapper .ts-control input { font: inherit; }
+  .ts-wrapper.multi .ts-control > div { background: var(--accent-weak); color: var(--accent-ink); border-radius: 4px; padding: 0 4px 0 6px; margin: 1px 3px 1px 0; font-size: 12px; border: 0; }
+  .ts-wrapper.plugin-remove_button .item .remove { border-left: 0; color: var(--accent-ink); padding: 0 4px; }
+  .ts-dropdown { font: inherit; border-color: var(--line-2); border-radius: var(--r); box-shadow: 0 8px 24px rgba(0,0,0,.12); margin-top: 4px; z-index: 50; }
+  .ts-dropdown .option { padding: 6px 10px; }
+  .ts-dropdown .active { background: var(--accent-weak); color: var(--accent-ink); }
+  .ts-dropdown .create { padding: 6px 10px; }
+
+  /* ---------- filter bar ---------- */
+  .filters { background: var(--card); border-bottom: 1px solid var(--line); padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; position: sticky; top: 0; z-index: 10; }
+  .filters .f { flex: 0 1 180px; min-width: 140px; }
+  .filters .f.wide { flex-basis: 240px; }
+  .summary { padding: 8px 16px 0; color: var(--ink-2); font-size: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  .summary b { color: var(--ink); font-weight: 600; }
+  .linkish { background: none; border: 0; color: var(--accent); cursor: pointer; font: inherit; padding: 0; }
+
+  /* ---------- table ---------- */
+  .wrap { padding: 8px 16px 80px; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+  thead th:first-child { border-top-left-radius: 8px; } thead th:last-child { border-top-right-radius: 8px; }
+  th, td { padding: 5px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  th { background: #f9fafb; font-weight: 600; color: var(--ink-2); font-size: 12px; position: sticky; top: var(--fh, 49px); z-index: 5; cursor: pointer; user-select: none; white-space: nowrap; }
+  th.sorted::after { content: ' ▾'; color: var(--accent); }
+  th.sorted.asc::after { content: ' ▴'; }
+  tbody tr:hover { background: #fafbfc; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.mid { font-weight: 600; color: var(--accent-ink); white-space: nowrap; width: 92px; font-variant-numeric: tabular-nums; }
+  td.sno { color: var(--ink-2); white-space: nowrap; width: 64px; }
+  td.name { font-weight: 500; }
+  td.name .ph { display: none; color: var(--ink-2); font-weight: 400; font-size: 12px; }
+  td.phone a { color: var(--ink); text-decoration: none; display: block; white-space: nowrap; }
+  td.phone a:hover { color: var(--accent); }
+  td.amt { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  th.amt { text-align: right; }
+  td.loc { color: var(--ink-2); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  td.acts { white-space: nowrap; width: 1%; text-align: right; }
+  .tag { display: inline-block; font-size: 11px; line-height: 18px; padding: 0 7px; border-radius: 999px; background: var(--accent-weak); color: var(--accent-ink); margin: 1px 2px 1px 0; white-space: nowrap; }
+  .muted { color: var(--ink-3); }
+  .msg { padding: 40px; text-align: center; color: var(--ink-2); background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+
+  @media (max-width: 760px) {
+    .top { padding: 8px 12px; }
+    .filters { padding: 8px 12px; position: static; }
+    .filters .f, .filters .f.wide { flex: 1 1 45%; min-width: 0; }
+    .summary, .wrap { padding-left: 12px; padding-right: 12px; }
+    th { top: 0; }
+    .col-phone, .col-loc, .col-groups, .col-sno { display: none; }
+    td.name .ph { display: block; }
+    td.name .tags-m { display: block; margin-top: 2px; }
+    th, td { padding: 6px 8px; }
+    .btn .lbl { display: none; }
+  }
+  .tags-m { display: none; }
+
+  /* ---------- dialogs ---------- */
+  dialog { border: 0; border-radius: 10px; padding: 0; overflow: auto; width: min(560px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+  dialog::backdrop { background: rgba(17,24,39,.4); }
+  .dlg-h { position: sticky; top: 0; z-index: 2; background: var(--card); display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--line); font-weight: 600; font-size: 14px; }
+  .dlg-b { padding: 14px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+  .dlg-f { position: sticky; bottom: 0; z-index: 2; padding: 10px 16px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; background: #fafafa; }
+  .fld { display: grid; gap: 4px; min-width: 0; }
+  .fld.full { grid-column: 1 / -1; }
+  .fld > span { font-size: 12px; font-weight: 500; color: var(--ink-2); }
+  .sect { grid-column: 1 / -1; font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .04em; margin-top: 4px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .hint { font-size: 12px; color: var(--ink-3); }
+  .warn { font-size: 12px; color: var(--danger); }
+  @media (max-width: 520px) { .dlg-b { grid-template-columns: 1fr; } }
+  .gm-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .gm-row .cnt { color: var(--ink-3); font-size: 12px; width: 44px; text-align: right; }
+
+  /* ---------- login ---------- */
+  .auth { min-height: 100dvh; display: grid; place-items: center; padding: 16px; }
+  .auth-card { width: min(360px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,.06); display: grid; gap: 12px; }
+  .auth-card .brand { justify-content: center; font-size: 17px; margin-bottom: 4px; }
+  .auth-card .btn { justify-content: center; height: 36px; }
+  .auth-card .sub { text-align: center; color: var(--ink-2); font-size: 12px; margin-top: -6px; }
+  .pw { position: relative; display: block; } .pw .inp { padding-right: 36px; }
+  .pw button { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); }
+  .role { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #eef2ff; color: #3730a3; text-transform: capitalize; }
+  .utable th { position: static; }
+  .utable td, .utable th { font-size: 12px; }
+  #toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: var(--r); display: none; z-index: 100; font-size: 13px; }
+</style>
+</head>
+<body>
+
+
+<div class="auth" id="auth" hidden>
+  <form class="auth-card" id="authForm" autocomplete="on">
+    <div class="brand"><span class="dot">P</span>PMWA Contacts</div>
+    <div class="sub" id="authSub">Sign in to continue</div>
+    <label class="fld" id="fSetupCode" hidden><span>Setup code</span><input class="inp" name="code" autocomplete="off"></label>
+    <label class="fld" id="fFullName" hidden><span>Your name</span><input class="inp" name="fullname" autocomplete="name"></label>
+    <label class="fld"><span>Username</span><input class="inp" name="username" required autocomplete="username" autocapitalize="none"></label>
+    <div class="fld"><span>Password</span><span class="pw"><input class="inp" name="password" type="password" required autocomplete="current-password"><button type="button" class="icon-btn" id="pwEye" title="Show password"><i class="fa-regular fa-eye"></i></button></span></div>
+    <div class="warn" id="authWarn"></div>
+    <button class="btn primary" id="authBtn" type="submit">Sign in</button>
+  </form>
+</div>
+
+<div id="app" hidden>
+<div class="top">
+  <div class="brand"><span class="dot">P</span>PMWA Contacts</div>
+  <span class="who" id="who"></span>
+  <span class="spacer"></span>
+  <button class="btn" id="btnGroups" hidden><i class="fa-solid fa-tags"></i><span class="lbl">Groups</span></button>
+  <button class="btn" id="btnCsv" title="Export filtered list"><i class="fa-solid fa-file-arrow-down"></i><span class="lbl">CSV</span></button>
+  <button class="btn" id="btnGcsv" title="Export filtered list in Google Contacts import format"><i class="fa-solid fa-address-book"></i><span class="lbl">Google Contacts</span></button>
+  <button class="btn" id="btnReload" title="Reload"><i class="fa-solid fa-rotate-right"></i></button>
+  <button class="btn" id="btnUsers" hidden title="Users"><i class="fa-solid fa-users"></i><span class="lbl">Users</span></button>
+  <button class="btn" id="btnPw" title="Change password"><i class="fa-solid fa-key"></i></button>
+  <button class="btn" id="btnLogout" title="Sign out"><i class="fa-solid fa-right-from-bracket"></i></button>
+  <button class="btn primary" id="btnAdd" hidden><i class="fa-solid fa-plus"></i><span class="lbl">Add contact</span></button>
+</div>
+
+<div class="filters" id="filters">
+  <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input class="inp" id="q" type="search" placeholder="Search name, phone, member ID, S.No, address…" autocomplete="off"></div>
+  <div class="f wide"><select id="fGroups" multiple placeholder="All groups"></select></div>
+  <div class="f"><select id="fCity" placeholder="All cities"></select></div>
+  <div class="f"><select id="fStatus">
+    <option value="">All contacts</option>
+    <option value="sub">With S.No / amount</option>
+    <option value="nosub">Without S.No</option>
+    <option value="noaddr">Missing address</option>
+  </select></div>
+</div>
+
+<div class="summary" id="summary">Loading…</div>
+<div class="wrap" id="list"></div>
+</div>
+
+<!-- add / edit -->
+<dialog id="dlg">
+  <form id="frm" autocomplete="off">
+    <div class="dlg-h"><span id="dlgTitle">Add contact</span><button type="button" class="icon-btn" data-close><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="dlg-b">
+      <label class="fld"><span>Member ID</span><input class="inp" name="memberId" readonly tabindex="-1" style="background:#f9fafb;color:var(--accent-ink);font-weight:600"></label>
+      <label class="fld"><span>Name *</span><input class="inp" name="name" required></label>
+      <label class="fld"><span>Phone *</span><input class="inp" name="phone1" required inputmode="tel"></label>
+      <label class="fld"><span>Other phones</span><input class="inp" name="phone2" inputmode="tel" placeholder="comma separated"></label>
+      <div class="warn full" id="dupWarn" style="grid-column:1/-1"></div>
+      <div class="fld full"><span>Groups</span><select id="fmGroups" multiple placeholder="Choose or type a new group"></select></div>
+      <label class="fld"><span>S.No</span><input class="inp" name="sno" placeholder="Auto — next number if empty"></label>
+      <label class="fld"><span>Amount (₹)</span><input class="inp" name="amount" inputmode="decimal"></label>
+
+      <div class="sect">Address</div>
+      <label class="fld"><span>Pincode</span><input class="inp" name="pincode" inputmode="numeric" maxlength="6" placeholder="6 digits"></label>
+      <div class="fld"><span>Post office / Area</span><select id="fmArea" placeholder="Enter pincode first"></select></div>
+      <div class="hint" id="pinHint" style="grid-column:1/-1"></div>
+      <label class="fld full"><span>Door no. / Street</span><input class="inp" name="address"></label>
+      <label class="fld"><span>Area</span><input class="inp" name="area"></label>
+      <label class="fld"><span>City / District</span><input class="inp" name="city"></label>
+      <label class="fld full"><span>State</span><input class="inp" name="state"></label>
+
+      <label class="fld full"><span>Notes</span><textarea class="inp" name="notes" rows="2"></textarea></label>
+      <div class="warn" id="warn" style="grid-column:1/-1"></div>
+    </div>
+    <div class="dlg-f">
+      <button type="button" class="btn" data-close>Cancel</button>
+      <button type="submit" class="btn primary" id="btnSave">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- delete -->
+<dialog id="dlgDel" style="width:min(400px,calc(100vw - 24px))">
+  <div class="dlg-h">Delete contact?</div>
+  <div style="padding:14px 16px" id="delName"></div>
+  <div class="dlg-f">
+    <button type="button" class="btn" data-close>Cancel</button>
+    <button type="button" class="btn danger" id="delOk"><i class="fa-regular fa-trash-can"></i>Delete</button>
+  </div>
+</dialog>
+
+<!-- groups -->
+<dialog id="dlgGroups" style="width:min(440px,calc(100vw - 24px))">
+  <div class="dlg-h"><span>Manage groups</span><button type="button" class="icon-btn" data-close><i class="fa-solid fa-xmark"></i></button></div>
+  <div style="padding:14px 16px">
+    <div class="hint" style="margin-bottom:10px">Rename a group on every contact, or clear the name and save to remove it from everyone.</div>
+    <div id="gmList"></div>
+    <div class="warn" id="gmWarn"></div>
+  </div>
+</dialog>
+
+<!-- users (admin) -->
+<dialog id="dlgUsers" style="width:min(640px,calc(100vw - 24px))">
+  <div class="dlg-h"><span>Users</span><button type="button" class="icon-btn" data-close><i class="fa-solid fa-xmark"></i></button></div>
+  <div style="padding:12px 16px;overflow-x:auto">
+    <table class="utable"><thead><tr><th>Username</th><th>Name</th><th>Role</th><th>Last login</th><th></th></tr></thead><tbody id="uList"></tbody></table>
+  </div>
+  <form id="uForm" class="dlg-b" style="border-top:1px solid var(--line)" autocomplete="off">
+    <div class="sect" style="border:0;margin:0;padding:0" id="uFormTitle">Add user</div>
+    <label class="fld"><span>Username</span><input class="inp" name="username" required autocapitalize="none"></label>
+    <label class="fld"><span>Name</span><input class="inp" name="name"></label>
+    <label class="fld"><span>Role</span><select class="inp" name="role"><option value="viewer">Viewer — view only</option><option value="editor">Editor — add / edit / delete</option><option value="admin">Admin — also manage users</option></select></label>
+    <label class="fld"><span id="uPwLbl">Password (min 8)</span><input class="inp" name="password" type="text"></label>
+    <label style="grid-column:1/-1;display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" name="active" checked> Active (can sign in)</label>
+    <div class="warn" id="uWarn" style="grid-column:1/-1"></div>
+    <div style="grid-column:1/-1;display:flex;gap:8px;justify-content:flex-end">
+      <button type="button" class="btn" id="uReset">New user</button>
+      <button type="submit" class="btn primary" id="uSave">Save user</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- change password -->
+<dialog id="dlgPw" style="width:min(380px,calc(100vw - 24px))">
+  <form id="pwForm">
+    <div class="dlg-h"><span>Change password</span><button type="button" class="icon-btn" data-close><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="dlg-b" style="grid-template-columns:1fr">
+      <label class="fld"><span>Current password</span><input class="inp" name="old" type="password" required autocomplete="current-password"></label>
+      <label class="fld"><span>New password (min 8)</span><input class="inp" name="nw" type="password" required autocomplete="new-password"></label>
+      <div class="warn" id="pwWarn"></div>
+    </div>
+    <div class="dlg-f"><button type="button" class="btn" data-close>Cancel</button><button type="submit" class="btn primary">Change</button></div>
+  </form>
+</dialog>
+
+<div id="toast"></div>
+
+<script>
+  let data = { contacts: [], canEdit: false };
+  let editing = null, deleting = null, pinResults = [];
+  let sortKey = 'mid', sortAsc = true;
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const digits = (s) => { let d = String(s).replace(/\D/g, ''); if (d.length === 12 && d.startsWith('91')) d = d.slice(2); else if (d.length === 11 && d.startsWith('0')) d = d.slice(1); return d; };
+  const split = (s) => String(s || '').split(',').map((x) => x.trim()).filter(Boolean);
+  const phones = (c) => [c.phone1, ...split(c.phone2)].filter(Boolean);
+  const firstSno = (c) => { const n = parseInt(split(c.sno)[0], 10); return isNaN(n) ? Infinity : n; };
+  const amt = (c) => parseFloat(c.amount) || 0;
+  const FA = {"search": "fa-solid fa-magnifying-glass", "plus": "fa-solid fa-plus", "edit": "fa-solid fa-pen", "trash": "fa-regular fa-trash-can", "wa": "fa-brands fa-whatsapp", "download": "fa-solid fa-file-arrow-down", "tags": "fa-solid fa-tags", "reload": "fa-solid fa-rotate-right", "x": "fa-solid fa-xmark", "gc": "fa-solid fa-address-book"};
+  const icon = (id) => `<i class="${FA[id]}"><\/i>`;
+  const allGroups = () => [...new Set(data.contacts.flatMap((c) => split(c.groups)))].sort((a, b) => a.localeCompare(b));
+  const groupCounts = () => { const n = {}; data.contacts.forEach((c) => split(c.groups).forEach((g) => { n[g] = (n[g] || 0) + 1; })); return n; };
+
+  function toast(msg) {
+    const t = $('toast'); t.textContent = msg; t.style.display = 'block';
+    clearTimeout(toast.h); toast.h = setTimeout(() => (t.style.display = 'none'), 2600);
+  }
+  // ---------- session ----------
+  let token = '';
+  try { token = localStorage.getItem('pmwa_token') || ''; } catch (e) {}
+  function setToken(t) { token = t || ''; try { t ? localStorage.setItem('pmwa_token', t) : localStorage.removeItem('pmwa_token'); } catch (e) {} }
+
+  // Data calls carry the session token; an expired session drops back to the login screen.
+  async function api(fn, ...args) {
+    try { return await call(fn, token, ...args); }
+    catch (e) {
+      if (String(e.message).includes('SESSION_EXPIRED')) { setToken(''); showAuth(false); throw new Error('Session expired, please sign in again.'); }
+      throw e;
+    }
+  }
+
+  // Inside Apps Script use google.script.run; on the external site (pmwa.jo3.org) POST to the web app.
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxyFrcT4zyjNyPCyDmzkNbttHrLOcsJ0eK2tTgSTsQh0-sSF42Jihrl8cqd5vGamaOYGA/exec';
+  function call(fn, ...args) {
+    if (window.google && google.script && google.script.run) {
+      return new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn](...args));
+    }
+    return fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn, args }), credentials: 'omit', redirect: 'follow' })
+      .catch(() => { throw new Error('Network error — check your internet connection'); })
+      .then((r) => r.json())
+      .then((j) => { if (!j.ok) throw new Error(j.error); return j.result; });
+  }
+
+  // ---------- searchable dropdowns ----------
+  const tsBase = { maxOptions: null, hideSelected: true };
+  const fGroups = new TomSelect('#fGroups', { ...tsBase, plugins: ['remove_button'], onChange: render,
+    render: { option: (d, e) => `<div>${e(d.text)} <span class="muted">${d.count ?? ''}<\/span><\/div>` } });
+  const fCity = new TomSelect('#fCity', { ...tsBase, allowEmptyOption: true, onChange: render });
+  const fStatus = new TomSelect('#fStatus', { controlInput: null, allowEmptyOption: true, onChange: render });
+  const fmGroups = new TomSelect('#fmGroups', { ...tsBase, plugins: ['remove_button'], create: true, createOnBlur: true, persist: false });
+  const fmArea = new TomSelect('#fmArea', { maxOptions: null, allowEmptyOption: true, onChange: (v) => {
+    const p = pinResults[v]; if (!p) return;
+    const f = $('frm'); f.area.value = p.name; f.city.value = p.district; f.state.value = p.state;
+  } });
+
+  function setPh(ts, text) { ts.settings.placeholder = text; ts.control_input.setAttribute('placeholder', text); }
+
+  function refreshFilterOptions() {
+    const n = groupCounts();
+    const keepG = fGroups.getValue().filter((g) => n[g]);
+    fGroups.clearOptions();
+    fGroups.addOptions(allGroups().map((g) => ({ value: g, text: g, count: n[g] })));
+    fGroups.setValue(keepG, true);
+
+    const cities = [...new Set(data.contacts.map((c) => c.city).filter(Boolean))].sort();
+    const keepC = cities.includes(fCity.getValue()) ? fCity.getValue() : '';
+    fCity.clearOptions();
+    fCity.addOptions([{ value: '', text: 'All cities' }, ...cities.map((c) => ({ value: c, text: c }))]);
+    fCity.setValue(keepC, true);
+  }
+
+  // ---------- load / render ----------
+  async function load() {
+    $('summary').textContent = 'Loading…';
+    try {
+      data = await api('getData');
+      $('who').innerHTML = esc(data.me.name) + ` <span class="role">${esc(data.me.role)}<\/span>`
+        + (data.sheetUrl ? ` · <a href="${esc(data.sheetUrl)}" target="_blank" rel="noopener">open sheet<\/a>` : '');
+      $('btnAdd').hidden = $('btnGroups').hidden = !data.canEdit;
+      $('btnUsers').hidden = data.me.role !== 'admin';
+      refreshFilterOptions();
+      render();
+    } catch (e) {
+      $('summary').textContent = '';
+      $('list').innerHTML = `<div class="msg">${esc(e.message)}<\/div>`;
+    }
+  }
+
+  function filtered() {
+    const q = $('q').value.trim().toLowerCase(), qd = digits(q);
+    const gs = fGroups.getValue(), city = fCity.getValue(), st = fStatus.getValue();
+    return data.contacts.filter((c) => {
+      if (gs.length && !split(c.groups).some((g) => gs.includes(g))) return false;
+      if (city && c.city !== city) return false;
+      if (st === 'sub' && !(c.sno || c.amount)) return false;
+      if (st === 'nosub' && c.sno) return false;
+      if (st === 'noaddr' && (c.address || c.area || c.pincode)) return false;
+      if (!q) return true;
+      if (qd.length >= 3 && phones(c).some((p) => digits(p).includes(qd))) return true;
+      if (split(c.sno).includes(q)) return true;
+      if (c.memberId.toLowerCase().includes(q)) return true;
+      return [c.name, c.address, c.area, c.city, c.state, c.pincode, c.notes, c.groups].join(' ').toLowerCase().includes(q);
+    });
+  }
+
+  const sorters = {
+    mid: (a, b) => a.memberId.localeCompare(b.memberId),
+    sno: (a, b) => firstSno(a) - firstSno(b) || a.name.localeCompare(b.name),
+    name: (a, b) => a.name.localeCompare(b.name),
+    phone: (a, b) => digits(a.phone1).localeCompare(digits(b.phone1)),
+    groups: (a, b) => a.groups.localeCompare(b.groups),
+    loc: (a, b) => (a.city + a.area).localeCompare(b.city + b.area),
+    amount: (a, b) => amt(a) - amt(b),
+  };
+
+  function render() {
+    const rows = filtered().sort(sorters[sortKey]);
+    if (!sortAsc) rows.reverse();
+    const total = rows.reduce((t, c) => t + amt(c), 0);
+    const any = $('q').value || fGroups.getValue().length || fCity.getValue() || fStatus.getValue();
+    $('summary').innerHTML = `<span><b>${rows.length}<\/b> of ${data.contacts.length} contacts<\/span><span>Total <b>₹${total.toLocaleString('en-IN')}<\/b><\/span>`
+      + (any ? '<button class="linkish" id="clearF">Clear filters<\/button>' : '');
+    if ($('clearF')) $('clearF').onclick = () => { $('q').value = ''; fGroups.clear(true); fCity.setValue('', true); fStatus.setValue('', true); render(); };
+
+    if (!rows.length) { $('list').innerHTML = '<div class="msg">No contacts match these filters.<\/div>'; return; }
+    const th = (k, label, cls = '') => `<th data-sort="${k}" class="${cls}${sortKey === k ? ' sorted' + (sortAsc ? ' asc' : '') : ''}">${label}<\/th>`;
+    $('list').innerHTML = `<table><thead><tr>
+      ${th('mid', 'Member ID')}${th('sno', 'S.No', 'col-sno')}${th('name', 'Name')}${th('phone', 'Phone', 'col-phone')}${th('groups', 'Groups', 'col-groups')}${th('loc', 'Area / City', 'col-loc')}${th('amount', 'Amount', 'amt')}<th><\/th>
+      <\/tr><\/thead><tbody>${rows.map(row).join('')}<\/tbody><\/table>`;
+  }
+
+  function row(c) {
+    const ph = phones(c);
+    const wa = ph.map(digits).find((d) => /^[6-9]\d{9}$/.test(d));
+    const loc = [c.area, c.city].filter(Boolean).join(', ');
+    const tags = split(c.groups).map((g) => `<span class="tag">${esc(g)}<\/span>`).join('');
+    return `<tr>
+      <td class="mid">${esc(c.memberId)}<\/td>
+      <td class="sno col-sno">${esc(c.sno)}<\/td>
+      <td class="name">${esc(c.name)}<span class="ph">${esc(ph.join(', '))}<\/span><span class="tags-m">${tags}<\/span><\/td>
+      <td class="phone col-phone">${ph.map((p) => `<a href="tel:${esc(p.replace(/\s/g, ''))}">${esc(p)}<\/a>`).join('')}<\/td>
+      <td class="col-groups">${tags}<\/td>
+      <td class="loc col-loc" title="${esc([c.address, c.area, c.city, c.state, c.pincode].filter(Boolean).join(', '))}">${esc(loc) || '<span class="muted">—<\/span>'}<\/td>
+      <td class="amt">${c.amount ? '₹' + esc(Number(c.amount).toLocaleString('en-IN')) : '<span class="muted">—<\/span>'}<\/td>
+      <td class="acts">
+        ${wa ? `<a class="act wa" href="https://wa.me/91${wa}" target="_blank" rel="noopener" title="WhatsApp">${icon('wa')}<\/a>` : ''}
+        ${data.canEdit ? `<button class="act edit" data-edit="${esc(c.id)}" title="Edit">${icon('edit')}<\/button><button class="act del" data-del="${esc(c.id)}" title="Delete">${icon('trash')}<\/button>` : ''}
+      <\/td><\/tr>`;
+  }
+
+  $('list').addEventListener('click', (ev) => {
+    const h = ev.target.closest('th[data-sort]');
+    if (h) { const k = h.dataset.sort; sortAsc = sortKey === k ? !sortAsc : k !== 'amount'; sortKey = k; render(); return; }
+    const e = ev.target.closest('[data-edit]'), d = ev.target.closest('[data-del]');
+    if (e) openForm(data.contacts.find((c) => c.id === e.dataset.edit));
+    if (d) {
+      deleting = data.contacts.find((c) => c.id === d.dataset.del);
+      $('delName').textContent = deleting.name + ' — ' + phones(deleting).join(', ');
+      $('dlgDel').showModal();
+    }
+  });
+  document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = () => b.closest('dialog').close()));
+
+  // ---------- add / edit ----------
+  const FIELDS = ['name', 'phone1', 'phone2', 'sno', 'amount', 'pincode', 'address', 'area', 'city', 'state', 'notes'];
+  function openForm(c) {
+    editing = c || null;
+    const f = $('frm');
+    $('dlgTitle').textContent = c ? 'Edit contact' : 'Add contact';
+    f.memberId.value = c ? c.memberId : 'Auto — given on save';
+    FIELDS.forEach((k) => { f[k].value = c ? c[k] : ''; });
+    fmGroups.clearOptions();
+    fmGroups.addOptions(allGroups().map((g) => ({ value: g, text: g })));
+    fmGroups.setValue(c ? split(c.groups) : fGroups.getValue(), true);
+    pinResults = [];
+    fmArea.clearOptions(); fmArea.clear(true); setPh(fmArea, 'Enter pincode first');
+    $('pinHint').textContent = ''; $('warn').textContent = '';
+    dupWarning();
+    $('dlg').showModal();
+    f.name.focus();
+  }
+
+  function dupWarning() {
+    const f = $('frm');
+    const mine = [f.phone1.value, ...split(f.phone2.value)].map(digits).filter((d) => d.length >= 8);
+    const other = data.contacts.find((c) => (!editing || c.id !== editing.id) && phones(c).map(digits).some((d) => mine.includes(d)));
+    $('dupWarn').textContent = other ? `This number already belongs to "${other.name}"` : '';
+  }
+  $('frm').phone1.addEventListener('input', dupWarning);
+  $('frm').phone2.addEventListener('input', dupWarning);
+
+  $('frm').pincode.addEventListener('input', async (e) => {
+    e.target.value = e.target.value.replace(/\D/g, '');
+    if (e.target.value.length !== 6) return;
+    const f = $('frm');
+    $('pinHint').textContent = 'Looking up pincode…';
+    try {
+      pinResults = await api('lookupPincode', e.target.value);
+      fmArea.clearOptions();
+      if (!pinResults.length) { $('pinHint').textContent = 'Pincode not found — type the address manually.'; return; }
+      fmArea.addOptions(pinResults.map((p, i) => ({ value: String(i), text: p.name })));
+      setPh(fmArea, 'Choose post office');
+      const p = pinResults[0];
+      if (!f.city.value) f.city.value = p.district;
+      if (!f.state.value) f.state.value = p.state;
+      if (pinResults.length === 1) fmArea.setValue('0');
+      else fmArea.focus();
+      $('pinHint').textContent = `${pinResults.length} post office${pinResults.length > 1 ? 's' : ''} · ${p.district}, ${p.state}`;
+    } catch (err) { $('pinHint').textContent = err.message; }
+  });
+
+  $('frm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const f = ev.target;
+    const c = { groups: fmGroups.getValue().join(', ') };
+    FIELDS.forEach((k) => { c[k] = f[k].value; });
+    if (editing) c.id = editing.id;
+    $('btnSave').disabled = true;
+    try {
+      const saved = await api('saveContact', c);
+      const i = data.contacts.findIndex((x) => x.id === saved.id);
+      if (i >= 0) data.contacts[i] = saved; else data.contacts.push(saved);
+      $('dlg').close();
+      refreshFilterOptions(); render();
+      toast(editing ? 'Saved' : 'Contact added');
+    } catch (e) { $('warn').textContent = e.message; }
+    finally { $('btnSave').disabled = false; }
+  });
+
+  // ---------- delete ----------
+  $('delOk').onclick = async () => {
+    const c = deleting;
+    $('dlgDel').close();
+    try {
+      await api('deleteContact', c.id);
+      data.contacts = data.contacts.filter((x) => x.id !== c.id);
+      refreshFilterOptions(); render();
+      toast('Deleted');
+    } catch (e) { toast(e.message); }
+  };
+
+  // ---------- groups ----------
+  function openGroups() {
+    const n = groupCounts();
+    $('gmWarn').textContent = '';
+    $('gmList').innerHTML = allGroups().map((g) =>
+      `<div class="gm-row"><input class="inp" value="${esc(g)}"><span class="cnt">${n[g]}<\/span><button type="button" class="btn" data-save="${esc(g)}">Save<\/button><\/div>`).join('')
+      || '<div class="hint">No groups yet — add one from a contact.<\/div>';
+    if (!$('dlgGroups').open) $('dlgGroups').showModal();
+  }
+  $('btnGroups').onclick = openGroups;
+  $('gmList').addEventListener('click', async (ev) => {
+    const b = ev.target.closest('[data-save]');
+    if (!b) return;
+    const oldName = b.dataset.save;
+    const newName = b.parentElement.querySelector('input').value.trim();
+    if (newName === oldName) return;
+    if (!newName && !confirm(`Remove group "${oldName}" from every contact?`)) return;
+    b.disabled = true;
+    try {
+      const n = await api('renameGroup', oldName, newName);
+      data.contacts.forEach((c) => { c.groups = [...new Set(split(c.groups).map((g) => (g === oldName ? newName : g)).filter(Boolean))].join(', '); });
+      const sel = fGroups.getValue().map((g) => (g === oldName ? newName : g)).filter(Boolean);
+      refreshFilterOptions(); fGroups.setValue(sel, true); render(); openGroups();
+      toast(newName ? `Renamed on ${n} contact(s)` : `Removed from ${n} contact(s)`);
+    } catch (e) { $('gmWarn').textContent = e.message; b.disabled = false; }
+  });
+
+  // ---------- export ----------
+  function download(name, rows) {
+    const cell = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(['﻿' + rows.map((r) => r.map(cell).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' }));
+    a.download = name; a.click();
+  }
+  $('btnCsv').onclick = () => download('pmwa_contacts.csv', [
+    ['Member ID', 'S.No', 'Name', 'Phone', 'Other phones', 'Groups', 'Amount', 'Address', 'Area', 'City', 'State', 'Pincode', 'Notes'],
+    ...filtered().map((c) => [c.memberId, c.sno, c.name, c.phone1, c.phone2, c.groups, c.amount, c.address, c.area, c.city, c.state, c.pincode, c.notes])]);
+  // Google Contacts import format: every group becomes a label, plus "PMWA".
+  $('btnGcsv').onclick = () => download('pmwa_google_contacts.csv', [
+    ['Name', 'Notes', 'Labels', 'Phone 1 - Label', 'Phone 1 - Value', 'Phone 2 - Label', 'Phone 2 - Value',
+      'Address 1 - Label', 'Address 1 - Street', 'Address 1 - Extended Address', 'Address 1 - City', 'Address 1 - Region', 'Address 1 - Postal Code', 'Address 1 - Country',
+      'Custom Field 1 - Label', 'Custom Field 1 - Value', 'Custom Field 2 - Label', 'Custom Field 2 - Value', 'Custom Field 3 - Label', 'Custom Field 3 - Value'],
+    ...filtered().map((c) => {
+      const hasAddr = c.address || c.area || c.city || c.pincode;
+      return [c.name, c.notes, ['PMWA', ...split(c.groups)].join(' ::: '), 'Mobile', c.phone1, c.phone2 ? 'Mobile' : '', split(c.phone2).join(' ::: '),
+        hasAddr ? 'Home' : '', c.address, c.area, c.city, c.state, c.pincode, hasAddr ? 'India' : '',
+        c.sno ? 'PMWA S.No' : '', c.sno, c.amount ? 'PMWA Amount' : '', c.amount, 'PMWA Member ID', c.memberId];
+    })]);
+
+  // Table header sticks right under the (possibly wrapped) filter bar.
+  new ResizeObserver(() => document.documentElement.style.setProperty('--fh',
+    getComputedStyle($('filters')).position === 'sticky' ? $('filters').offsetHeight + 'px' : '0px')).observe($('filters'));
+
+  $('q').addEventListener('input', render);
+  $('btnAdd').onclick = () => openForm(null);
+  $('btnReload').onclick = load;
+  // ---------- login / setup ----------
+  let setupMode = false;
+  function showAuth(isSetup) {
+    setupMode = isSetup;
+    $('app').hidden = true; $('auth').hidden = false;
+    $('fSetupCode').hidden = $('fFullName').hidden = !isSetup;
+    $('authForm').code.required = isSetup;
+    $('authSub').textContent = isSetup ? 'First-time setup: create the admin account' : 'Sign in to continue';
+    $('authBtn').textContent = isSetup ? 'Create admin & sign in' : 'Sign in';
+    $('authForm').password.autocomplete = isSetup ? 'new-password' : 'current-password';
+    $('authWarn').textContent = '';
+    (isSetup ? $('authForm').code : $('authForm').username).focus();
+  }
+  function showApp() { $('auth').hidden = true; $('app').hidden = false; load(); }
+
+  $('pwEye').onclick = () => { const p = $('authForm').password; p.type = p.type === 'password' ? 'text' : 'password'; };
+  $('authForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const f = ev.target;
+    $('authBtn').disabled = true; $('authWarn').textContent = '';
+    try {
+      const r = setupMode
+        ? await call('setupAdmin', f.code.value, f.username.value, f.password.value, f.fullname.value)
+        : await call('login', f.username.value, f.password.value);
+      setToken(r.token);
+      f.password.value = '';
+      showApp();
+    } catch (e) { $('authWarn').textContent = e.message; }
+    finally { $('authBtn').disabled = false; }
+  });
+  $('btnLogout').onclick = async () => { try { await call('logout', token); } catch (e) {} setToken(''); data = { contacts: [], canEdit: false }; showAuth(false); };
+
+  // change password
+  $('btnPw').onclick = () => { $('pwForm').reset(); $('pwWarn').textContent = ''; $('dlgPw').showModal(); };
+  $('pwForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    try { await api('changePassword', ev.target.old.value, ev.target.nw.value); $('dlgPw').close(); toast('Password changed'); }
+    catch (e) { $('pwWarn').textContent = e.message; }
+  });
+
+  // users (admin)
+  let users = [], uEditing = null;
+  function renderUsers() {
+    $('uList').innerHTML = users.map((u) => `<tr>
+      <td><b>${esc(u.username)}<\/b>${u.active ? '' : ' <span class="muted">(disabled)<\/span>'}<\/td><td>${esc(u.name)}<\/td>
+      <td><span class="role">${esc(u.role)}<\/span><\/td><td class="muted">${esc(u.lastLogin) || '—'}<\/td>
+      <td class="acts"><button class="act edit" data-uedit="${esc(u.username)}" title="Edit"><i class="fa-solid fa-pen"><\/i><\/button><button class="act del" data-udel="${esc(u.username)}" title="Delete"><i class="fa-regular fa-trash-can"><\/i><\/button><\/td><\/tr>`).join('');
+  }
+  function uFormReset(u) {
+    uEditing = u || null;
+    const f = $('uForm');
+    f.username.value = u ? u.username : ''; f.username.readOnly = !!u;
+    f.name.value = u ? u.name : ''; f.role.value = u ? u.role : 'viewer';
+    f.password.value = ''; f.password.required = !u; f.active.checked = u ? u.active : true;
+    $('uFormTitle').textContent = u ? 'Edit ' + u.username : 'Add user';
+    $('uPwLbl').textContent = u ? 'New password (leave empty to keep)' : 'Password (min 8)';
+    $('uWarn').textContent = '';
+  }
+  $('btnUsers').onclick = async () => {
+    try { users = await api('listUsers'); renderUsers(); uFormReset(); $('dlgUsers').showModal(); } catch (e) { toast(e.message); }
+  };
+  $('uReset').onclick = () => uFormReset();
+  $('uList').addEventListener('click', async (ev) => {
+    const e = ev.target.closest('[data-uedit]'), d = ev.target.closest('[data-udel]');
+    if (e) uFormReset(users.find((u) => u.username === e.dataset.uedit));
+    if (d && confirm(`Delete user "${d.dataset.udel}"?`)) {
+      try { users = await api('deleteUser', d.dataset.udel); renderUsers(); uFormReset(); toast('User deleted'); } catch (err) { $('uWarn').textContent = err.message; }
+    }
+  });
+  $('uForm').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const f = ev.target;
+    $('uSave').disabled = true;
+    try {
+      users = await api('saveUser', { isNew: !uEditing, username: f.username.value, name: f.name.value, role: f.role.value, password: f.password.value, active: f.active.checked });
+      renderUsers(); uFormReset(); toast('User saved');
+    } catch (e) { $('uWarn').textContent = e.message; }
+    finally { $('uSave').disabled = false; }
+  });
+
+  // start: valid saved session -> app, no users yet -> setup, else -> login
+  (async () => {
+    try {
+      const st = await call('authStatus', token);
+      if (st.me) showApp(); else { setToken(''); showAuth(st.needsSetup); }
+    } catch (e) { showAuth(false); $('authWarn').textContent = e.message; }
+  })();
+</script>
+</body>
+</html>
