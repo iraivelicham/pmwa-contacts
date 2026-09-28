@@ -26,6 +26,7 @@
     .pmwa-inst .t { flex: 1; min-width: 0; }
     .pmwa-inst b { display: block; font-size: 14px; }
     .pmwa-inst .s { color: #4b5563; font-size: 12px; }
+    .pmwa-inst .s b { display: inline; font-size: inherit; color: #111827; }
     .pmwa-inst .go { background: #1f6f43; color: #fff; border: 0; border-radius: 8px; padding: 9px 14px; font: 600 13px Inter, system-ui, sans-serif; cursor: pointer; }
     .pmwa-inst .x { background: none; border: 0; color: #9ca3af; font-size: 20px; line-height: 1; padding: 4px; cursor: pointer; align-self: flex-start; }
     .pmwa-inst .ios { display: inline-block; vertical-align: -3px; width: 16px; height: 16px; }`;
@@ -41,7 +42,7 @@
     bar.className = 'pmwa-inst';
     bar.innerHTML = ios
       ? `<img src="icon-192.png" alt=""><div class="t"><b>Install PMWA Contacts</b>
-           <span class="s">Tap ${SHARE_ICON} <b style="display:inline">Share</b>, then <b style="display:inline">Add to Home Screen</b></span></div>
+           <span class="s">Tap ${SHARE_ICON} <b>Share</b>, then <b>Add to Home Screen</b></span></div>
          <button class="x" aria-label="Close">&times;</button>`
       : `<img src="icon-192.png" alt=""><div class="t"><b>Install PMWA Contacts</b>
            <span class="s">Open it like an app from your home screen</span></div>
