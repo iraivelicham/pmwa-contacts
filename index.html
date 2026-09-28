@@ -227,6 +227,13 @@
   .hint { font-size: 12px; color: var(--ink-3); }
   .warn { font-size: 12px; color: var(--danger); }
   @media (max-width: 520px) { .dlg-b { grid-template-columns: 1fr; } }
+  .pinrow { display: flex; align-items: center; gap: 10px; }
+  .pinrow .inp { width: 130px; flex: none; }
+  .pin-sugg { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pin-sugg:empty { display: none; }
+  .chip { border: 1px solid var(--line-2); background: var(--card); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12px; color: var(--ink); cursor: pointer; }
+  .chip:hover { border-color: var(--accent); background: var(--accent-weak); color: var(--accent-ink); }
+  .chip i { margin-right: 4px; font-size: 10px; color: var(--accent); }
 
   /* ---------- login ---------- */
   .auth { min-height: 100dvh; display: grid; place-items: center; padding: 16px; }
@@ -308,13 +315,11 @@
       <label class="fld"><span>Amount (₹)</span><input class="inp" name="amount" inputmode="decimal"></label>
 
       <div class="sect">Address</div>
-      <label class="fld"><span>Pincode</span><input class="inp" name="pincode" inputmode="numeric" maxlength="6" placeholder="6 digits"></label>
-      <div class="fld"><span>Post office / Area</span><select id="fmArea" placeholder="Enter pincode first"></select></div>
-      <div class="hint" id="pinHint" style="grid-column:1/-1"></div>
-      <label class="fld full"><span>Door no. / Street</span><input class="inp" name="address"></label>
-      <label class="fld"><span>Area</span><input class="inp" name="area"></label>
-      <label class="fld"><span>City / District</span><input class="inp" name="city"></label>
-      <label class="fld full"><span>State</span><input class="inp" name="state"></label>
+      <div class="fld full"><span>Pincode</span>
+        <div class="pinrow"><input class="inp" name="pincode" inputmode="numeric" maxlength="6" placeholder="6 digits"><span class="hint" id="pinHint"></span></div>
+        <div class="pin-sugg" id="pinSugg"></div>
+      </div>
+      <label class="fld full"><span>Address</span><textarea class="inp" name="address" rows="3" placeholder="Door no., street, area, city"></textarea></label>
 
       <label class="fld full"><span>Notes</span><textarea class="inp" name="notes" rows="2"></textarea></label>
       <div class="warn" id="warn" style="grid-column:1/-1"></div>
@@ -389,6 +394,11 @@
   const groupList = () => (data.groups && data.groups.length ? data.groups : Object.keys(GCLS));
   const grank = (g) => { const i = groupList().indexOf(g); return i < 0 ? 99 : i; };
   const groupsOf = (c) => split(c.groups).sort((a, b) => grank(a) - grank(b));
+  // Address text lines (plus any older area/city/state values), and one-line / with-pincode forms.
+  const addrLines = (c) => String(c.address || '').split('\n').map((s) => s.trim())
+    .concat([c.area, c.city, c.state].filter(Boolean).join(', ')).filter(Boolean);
+  const addrText = (c) => addrLines(c).join(', ');
+  const addrPin = (c) => [addrText(c), c.pincode].filter(Boolean).join(' - ');
   const FA = {"search": "fa-solid fa-magnifying-glass", "plus": "fa-solid fa-plus", "edit": "fa-solid fa-pen", "trash": "fa-regular fa-trash-can", "wa": "fa-brands fa-whatsapp", "download": "fa-solid fa-file-arrow-down", "tags": "fa-solid fa-tags", "reload": "fa-solid fa-rotate-right", "x": "fa-solid fa-xmark", "gc": "fa-solid fa-address-book"};
   const icon = (id) => `<i class="${FA[id]}"><\/i>`;
   const groupCounts = () => { const n = {}; data.contacts.forEach((c) => split(c.groups).forEach((g) => { n[g] = (n[g] || 0) + 1; })); return n; };
@@ -431,12 +441,6 @@
   $('fNoAddr').onchange = render;
   const fmGroups = new TomSelect('#fmGroups', { ...tsBase, plugins: ['remove_button'], create: false,
     render: { item: gItem, option: (d, e) => `<div><span class="gdot ${gcls(d.value)}"><\/span>${e(d.text)}<\/div>` } });
-  const fmArea = new TomSelect('#fmArea', { maxOptions: null, allowEmptyOption: true, onChange: (v) => {
-    const p = pinResults[v]; if (!p) return;
-    const f = $('frm'); f.area.value = p.name; f.city.value = p.district; f.state.value = p.state;
-  } });
-
-  function setPh(ts, text) { ts.settings.placeholder = text; ts.control_input.setAttribute('placeholder', text); }
 
   function refreshFilterOptions() {
     const n = groupCounts();
@@ -482,7 +486,7 @@
     name: (a, b) => a.name.localeCompare(b.name),
     phone: (a, b) => digits(a.phone1).localeCompare(digits(b.phone1)),
     groups: (a, b) => grank(groupsOf(a)[0]) - grank(groupsOf(b)[0]) || idNum(a) - idNum(b),
-    loc: (a, b) => (a.city + a.area).localeCompare(b.city + b.area),
+    loc: (a, b) => addrText(a).localeCompare(addrText(b)),
     amount: (a, b) => amt(a) - amt(b),
   };
 
@@ -513,7 +517,7 @@
     if (mobile.matches) { $('list').innerHTML = `<div class="clist">${rows.map(item).join('')}<\/div>`; return; }
     const th = (k, label, cls = '') => `<th data-sort="${k}" class="${cls}${sortKey === k ? ' sorted' + (sortAsc ? ' asc' : '') : ''}">${label}<\/th>`;
     $('list').innerHTML = `<table><thead><tr>
-      ${th('name', 'Name')}${th('mid', 'Member ID')}<th class="col-sno nosort">S.No<\/th>${th('phone', 'Phone', 'col-phone')}${th('groups', 'Groups', 'col-groups')}${th('loc', 'Area / City', 'col-loc')}${th('amount', 'Amount', 'amt')}<th class="nosort"><\/th>
+      ${th('name', 'Name')}${th('mid', 'Member ID')}<th class="col-sno nosort">S.No<\/th>${th('phone', 'Phone', 'col-phone')}${th('groups', 'Groups', 'col-groups')}${th('loc', 'Address', 'col-loc')}${th('amount', 'Amount', 'amt')}<th class="nosort"><\/th>
       <\/tr><\/thead><tbody>${rows.map((c, i) => row(c, i + 1)).join('')}<\/tbody><\/table>`;
   }
 
@@ -523,7 +527,7 @@
 
   // One line of the mobile list: ID pill (group colour) · name + amount · groups + phone + area · WhatsApp.
   function item(c) {
-    const wa = waNum(c), loc = [c.area, c.city].filter(Boolean).join(', ');
+    const wa = waNum(c), loc = addrText(c);
     return `<div class="ci" data-open="${esc(c.id)}">
       <span class="idp ${gcls(groupsOf(c)[0])}">${esc(c.memberId)}<\/span>
       <div class="bd">
@@ -537,7 +541,7 @@
   // ---------- contact details sheet (mobile) ----------
   function openDetail(c) {
     const ph = phones(c), wa = waNum(c), gs = groupsOf(c);
-    const addr = [c.address, c.area, c.city, [c.state, c.pincode].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+    const addr = addrLines(c).map(esc).concat(c.pincode ? ['PIN ' + esc(c.pincode)] : []).join('<br>');
     const id = esc(c.id);
     const acts = [
       ph[0] && `<a class="da" href="tel:${esc(ph[0].replace(/\s/g, ''))}"><span class="c" style="--c:#0f766e"><i class="fa-solid fa-phone"><\/i><\/span>Call<\/a>`,
@@ -553,7 +557,7 @@
       <div class="dl">
         ${line('fa-solid fa-phone', ph.map((p) => `<a href="tel:${esc(p.replace(/\s/g, ''))}">${esc(p)}<\/a>`).join('') || '<span class="muted">No phone<\/span>')}
         ${line('fa-solid fa-indian-rupee-sign', c.amount ? `${rupees(c)} <span class="lbl2">Amount<\/span>` : '<span class="muted">No amount<\/span>')}
-        ${line('fa-solid fa-location-dot', addr ? esc(addr) : '<span class="muted">No address<\/span>')}
+        ${line('fa-solid fa-location-dot', addr || '<span class="muted">No address<\/span>')}
         ${c.notes ? line('fa-regular fa-note-sticky', esc(c.notes).replace(/\n/g, '<br>')) : ''}
         ${c.updatedAt ? line('fa-regular fa-clock', `<span class="muted">Updated ${esc(c.updatedAt)}${c.updatedBy ? ' by ' + esc(c.updatedBy) : ''}<\/span>`) : ''}
       <\/div>`;
@@ -573,7 +577,7 @@
   function row(c, n) {
     const ph = phones(c);
     const wa = waNum(c);
-    const loc = [c.area, c.city].filter(Boolean).join(', ');
+    const loc = addrPin(c);
     const tags = tagsHtml(c);
     return `<tr>
       <td class="name">${esc(c.name)}<span class="ph">${esc(ph.join(', '))}<\/span><span class="tags-m">${tags}<\/span><\/td>
@@ -581,7 +585,7 @@
       <td class="sno col-sno">${n}<\/td>
       <td class="phone col-phone">${ph.map((p) => `<a href="tel:${esc(p.replace(/\s/g, ''))}">${esc(p)}<\/a>`).join('')}<\/td>
       <td class="col-groups">${tags}<\/td>
-      <td class="loc col-loc" title="${esc([c.address, c.area, c.city, c.state, c.pincode].filter(Boolean).join(', '))}">${esc(loc) || '<span class="muted">—<\/span>'}<\/td>
+      <td class="loc col-loc" title="${esc(loc)}">${esc(loc) || '<span class="muted">—<\/span>'}<\/td>
       <td class="amt">${c.amount ? rupees(c) : '<span class="muted">—<\/span>'}<\/td>
       <td class="acts">
         ${wa ? `<a class="act wa" href="https://wa.me/91${wa}" target="_blank" rel="noopener" title="WhatsApp">${icon('wa')}<\/a>` : ''}
@@ -607,17 +611,19 @@
 
   // ---------- add / edit ----------
   // Member ID is given by the server on save; S.No is only a list counter, so neither is edited here.
-  const FIELDS = ['name', 'phone1', 'phone2', 'amount', 'pincode', 'address', 'area', 'city', 'state', 'notes'];
+  // Address is one free-text box (older area/city/state values are folded into it).
+  const FIELDS = ['name', 'phone1', 'phone2', 'amount', 'pincode', 'address', 'notes'];
   function openForm(c) {
     editing = c || null;
     const f = $('frm');
     $('dlgTitle').innerHTML = c ? `Edit contact <span class="mid-badge">${esc(c.memberId)}<\/span>` : 'Add contact';
     FIELDS.forEach((k) => { f[k].value = c ? c[k] : ''; });
+    if (c) f.address.value = addrLines(c).join('\n');
     fmGroups.clearOptions();
     fmGroups.addOptions(groupList().map((g) => ({ value: g, text: g })));
     fmGroups.setValue(c ? groupsOf(c) : (fGroups.getValue().length ? fGroups.getValue() : ['Subscriber']), true);
     pinResults = [];
-    fmArea.clearOptions(); fmArea.clear(true); setPh(fmArea, 'Enter pincode first');
+    $('pinSugg').innerHTML = '';
     $('pinHint').textContent = ''; $('warn').textContent = '';
     dupWarning();
     $('dlg').showModal();
@@ -633,24 +639,25 @@
   $('frm').phone1.addEventListener('input', dupWarning);
   $('frm').phone2.addEventListener('input', dupWarning);
 
+  // 6-digit pincode -> post offices as chips; tapping one adds "Area, District, State" to the address.
   $('frm').pincode.addEventListener('input', async (e) => {
     e.target.value = e.target.value.replace(/\D/g, '');
-    if (e.target.value.length !== 6) return;
-    const f = $('frm');
-    $('pinHint').textContent = 'Looking up pincode…';
+    $('pinSugg').innerHTML = '';
+    if (e.target.value.length !== 6) { $('pinHint').textContent = ''; return; }
+    $('pinHint').textContent = 'Looking up…';
     try {
       pinResults = await api('lookupPincode', e.target.value);
-      fmArea.clearOptions();
-      if (!pinResults.length) { $('pinHint').textContent = 'Pincode not found — type the address manually.'; return; }
-      fmArea.addOptions(pinResults.map((p, i) => ({ value: String(i), text: p.name })));
-      setPh(fmArea, 'Choose post office');
-      const p = pinResults[0];
-      if (!f.city.value) f.city.value = p.district;
-      if (!f.state.value) f.state.value = p.state;
-      if (pinResults.length === 1) fmArea.setValue('0');
-      else fmArea.focus();
-      $('pinHint').textContent = `${pinResults.length} post office${pinResults.length > 1 ? 's' : ''} · ${p.district}, ${p.state}`;
+      if (!pinResults.length) { $('pinHint').textContent = 'Pincode not found'; return; }
+      $('pinHint').textContent = `${pinResults[0].district}, ${pinResults[0].state} · tap an area to add it`;
+      $('pinSugg').innerHTML = pinResults.map((p, i) => `<button type="button" class="chip" data-pin="${i}"><i class="fa-solid fa-plus"><\/i>${esc(p.name)}<\/button>`).join('');
     } catch (err) { $('pinHint').textContent = err.message; }
+  });
+  $('pinSugg').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pin]'); if (!b) return;
+    const p = pinResults[b.dataset.pin], ta = $('frm').address;
+    const line = [p.name, p.district, p.state].filter((x, i, a) => x && a.indexOf(x) === i).join(', ');
+    if (!ta.value.includes(line)) ta.value = ta.value.trim() ? ta.value.trimEnd() + '\n' + line : line;
+    ta.focus();
   });
 
   $('frm').addEventListener('submit', async (ev) => {
@@ -691,17 +698,17 @@
     a.download = name; a.click();
   }
   $('btnCsv').onclick = () => download('pmwa_contacts.csv', [
-    ['S.No', 'Name', 'Member ID', 'Phone', 'Other phones', 'Groups', 'Amount', 'Address', 'Area', 'City', 'State', 'Pincode', 'Notes'],
-    ...shown().map((c, i) => [i + 1, c.name, c.memberId, c.phone1, c.phone2, c.groups, c.amount, c.address, c.area, c.city, c.state, c.pincode, c.notes])]);
+    ['S.No', 'Name', 'Member ID', 'Phone', 'Other phones', 'Groups', 'Amount', 'Address', 'Pincode', 'Notes'],
+    ...shown().map((c, i) => [i + 1, c.name, c.memberId, c.phone1, c.phone2, c.groups, c.amount, addrText(c), c.pincode, c.notes])]);
   // Google Contacts import format: every group becomes a label, plus "PMWA".
   $('btnGcsv').onclick = () => download('pmwa_google_contacts.csv', [
     ['Name', 'Notes', 'Labels', 'Phone 1 - Label', 'Phone 1 - Value', 'Phone 2 - Label', 'Phone 2 - Value',
       'Address 1 - Label', 'Address 1 - Street', 'Address 1 - Extended Address', 'Address 1 - City', 'Address 1 - Region', 'Address 1 - Postal Code', 'Address 1 - Country',
       'Custom Field 1 - Label', 'Custom Field 1 - Value', 'Custom Field 2 - Label', 'Custom Field 2 - Value'],
     ...shown().map((c) => {
-      const hasAddr = c.address || c.area || c.city || c.pincode;
+      const hasAddr = addrText(c) || c.pincode;
       return [c.name, c.notes, ['PMWA', ...split(c.groups)].join(' ::: '), 'Mobile', c.phone1, c.phone2 ? 'Mobile' : '', split(c.phone2).join(' ::: '),
-        hasAddr ? 'Home' : '', c.address, c.area, c.city, c.state, c.pincode, hasAddr ? 'India' : '',
+        hasAddr ? 'Home' : '', addrText(c), '', '', '', c.pincode, hasAddr ? 'India' : '',
         'PMWA Member ID', c.memberId, c.amount ? 'PMWA Amount' : '', c.amount];
     })]);
 
