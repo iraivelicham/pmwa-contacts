@@ -169,6 +169,41 @@
   .mi.danger { color: var(--danger); }
   .mi-sep { height: 1px; background: var(--line); margin: 6px 10px; }
 
+  /* ---------- mobile contact list (replaces the table under 760px) ---------- */
+  .clist { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .ci { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .ci:last-child { border-bottom: 0; }
+  .ci:active { background: #f3f4f6; }
+  .idp { flex: none; min-width: 50px; text-align: center; font-size: 11px; font-weight: 700; padding: 5px 6px; border-radius: 8px; background: var(--accent-weak); color: var(--accent-ink); font-variant-numeric: tabular-nums; }
+  .idp.g-ec { background: #fef3c7; color: #92400e; }
+  .idp.g-sub { background: #e0f2fe; color: #075985; }
+  .ci .bd { flex: 1; min-width: 0; }
+  .ci .l1 { display: flex; align-items: baseline; gap: 8px; }
+  .ci .nm { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ci .am { flex: none; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .ci .l2 { margin-top: 2px; color: var(--ink-2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ci .l2 .tag { font-size: 10px; line-height: 16px; padding: 0 6px; margin: 0 4px 0 0; vertical-align: 1px; }
+  .waq { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: #128c4b; background: #e9f8ef; font-size: 18px; text-decoration: none; }
+  .waq.none { visibility: hidden; }
+  .sortsel { margin-left: auto; height: 28px; border: 1px solid var(--line-2); border-radius: 999px; padding: 0 26px 0 10px; font: inherit; font-size: 12px; color: var(--ink); -webkit-appearance: none; appearance: none;
+    background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") right 9px center / 11px no-repeat; }
+
+  /* contact details sheet */
+  .av.g-ec { background: #d97706; } .av.g-sub { background: #0284c7; }
+  .dh { display: flex; align-items: center; gap: 12px; padding: 2px 18px 12px; }
+  .dh b { display: block; font-size: 17px; line-height: 1.3; }
+  .dh .sub { margin-top: 3px; font-size: 12px; color: var(--ink-2); }
+  .dh .sub .tag { margin-left: 4px; }
+  .dacts { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 6px; padding: 2px 12px 12px; border-bottom: 1px solid var(--line); }
+  .da { display: grid; justify-items: center; gap: 5px; border: 0; background: none; padding: 4px 0; font: inherit; font-size: 12px; font-weight: 500; color: var(--ink-2); text-decoration: none; cursor: pointer; }
+  .da .c { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; color: var(--c); background: color-mix(in srgb, var(--c) 13%, #fff); }
+  .dl { padding: 2px 18px 6px; }
+  .dr { display: flex; gap: 14px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 14px; line-height: 1.45; }
+  .dr:last-child { border-bottom: 0; }
+  .dr > i { flex: none; width: 18px; text-align: center; color: var(--ink-3); margin-top: 3px; }
+  .dr a { color: var(--ink); text-decoration: none; display: block; }
+  .dr .lbl2 { display: block; font-size: 11px; color: var(--ink-3); }
+
   @media (max-width: 760px) {
     .top .btn:not(#btnAdd), .who { display: none; }
     .avatar-btn { display: block; }
@@ -245,6 +280,10 @@
   <div class="sheet-h"><span class="av lg" id="avMenu">?</span><div><b id="menuName"></b><div class="muted" id="menuRole"></div></div></div>
   <div class="sheet-list" id="menuList"></div>
 </div>
+
+<!-- mobile contact details (bottom sheet) -->
+<div class="sheet-bg" id="cBg" hidden></div>
+<div class="sheet" id="cSheet" hidden role="dialog" aria-label="Contact details"></div>
 
 <div class="filters" id="filters">
   <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input class="inp" id="q" type="search" placeholder="Search name, phone, member ID, address…" autocomplete="off"></div>
@@ -454,27 +493,88 @@
     return rows;
   }
 
+  // Phones: a compact list + details sheet. Wider screens: the sortable table.
+  const mobile = matchMedia('(max-width: 760px)');
+  mobile.addEventListener('change', () => { if (data.me) render(); });
+  const SORTS = [['mid', true, 'Member ID'], ['name', true, 'Name A–Z'], ['amount', false, 'Amount high–low'], ['groups', true, 'Group']];
+
   function render() {
     const rows = shown();
     const total = rows.reduce((t, c) => t + amt(c), 0);
     const any = $('q').value || fGroups.getValue().length || $('fNoAddr').checked;
     $('summary').innerHTML = `<span><b>${rows.length}<\/b> of ${data.contacts.length} contacts<\/span><span>Total <b>₹${total.toLocaleString('en-IN')}<\/b><\/span>`
-      + (any ? '<button class="linkish" id="clearF">Clear filters<\/button>' : '');
+      + (any ? '<button class="linkish" id="clearF">Clear filters<\/button>' : '')
+      + (mobile.matches ? `<select class="sortsel" id="sortSel" aria-label="Sort">${SORTS.map(([k, asc, label]) =>
+        `<option value="${k}"${k === sortKey ? ' selected' : ''}>${label}<\/option>`).join('')}<\/select>` : '');
     if ($('clearF')) $('clearF').onclick = () => { $('q').value = ''; fGroups.clear(true); $('fNoAddr').checked = false; render(); };
+    if ($('sortSel')) $('sortSel').onchange = (e) => { const s = SORTS.find((x) => x[0] === e.target.value); sortKey = s[0]; sortAsc = s[1]; render(); };
 
     if (!rows.length) { $('list').innerHTML = '<div class="msg">No contacts match these filters.<\/div>'; return; }
+    if (mobile.matches) { $('list').innerHTML = `<div class="clist">${rows.map(item).join('')}<\/div>`; return; }
     const th = (k, label, cls = '') => `<th data-sort="${k}" class="${cls}${sortKey === k ? ' sorted' + (sortAsc ? ' asc' : '') : ''}">${label}<\/th>`;
     $('list').innerHTML = `<table><thead><tr>
       ${th('name', 'Name')}${th('mid', 'Member ID')}<th class="col-sno nosort">S.No<\/th>${th('phone', 'Phone', 'col-phone')}${th('groups', 'Groups', 'col-groups')}${th('loc', 'Area / City', 'col-loc')}${th('amount', 'Amount', 'amt')}<th class="nosort"><\/th>
       <\/tr><\/thead><tbody>${rows.map((c, i) => row(c, i + 1)).join('')}<\/tbody><\/table>`;
   }
 
+  const waNum = (c) => phones(c).map(digits).find((d) => /^[6-9]\d{9}$/.test(d));
+  const rupees = (c) => '₹' + Number(c.amount).toLocaleString('en-IN');
+  const tagsHtml = (c) => groupsOf(c).map((g) => `<span class="tag ${gcls(g)}">${esc(g)}<\/span>`).join('');
+
+  // One line of the mobile list: ID pill (group colour) · name + amount · groups + phone + area · WhatsApp.
+  function item(c) {
+    const wa = waNum(c), loc = [c.area, c.city].filter(Boolean).join(', ');
+    return `<div class="ci" data-open="${esc(c.id)}">
+      <span class="idp ${gcls(groupsOf(c)[0])}">${esc(c.memberId)}<\/span>
+      <div class="bd">
+        <div class="l1"><span class="nm">${esc(c.name)}<\/span>${c.amount ? `<span class="am">${rupees(c)}<\/span>` : ''}<\/div>
+        <div class="l2">${tagsHtml(c)}${esc(phones(c)[0] || '')}${loc ? ' · ' + esc(loc) : ''}<\/div>
+      <\/div>
+      ${wa ? `<a class="waq" href="https://wa.me/91${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${icon('wa')}<\/a>` : '<span class="waq none"><\/span>'}
+    <\/div>`;
+  }
+
+  // ---------- contact details sheet (mobile) ----------
+  function openDetail(c) {
+    const ph = phones(c), wa = waNum(c), gs = groupsOf(c);
+    const addr = [c.address, c.area, c.city, [c.state, c.pincode].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+    const id = esc(c.id);
+    const acts = [
+      ph[0] && `<a class="da" href="tel:${esc(ph[0].replace(/\s/g, ''))}"><span class="c" style="--c:#0f766e"><i class="fa-solid fa-phone"><\/i><\/span>Call<\/a>`,
+      wa && `<a class="da" href="https://wa.me/91${wa}" target="_blank" rel="noopener"><span class="c" style="--c:#16a34a"><i class="fa-brands fa-whatsapp"><\/i><\/span>WhatsApp<\/a>`,
+      data.canEdit && `<button class="da" data-edit="${id}"><span class="c" style="--c:#2563eb"><i class="fa-solid fa-pen"><\/i><\/span>Edit<\/button>`,
+      data.canEdit && `<button class="da" data-del="${id}"><span class="c" style="--c:#dc2626"><i class="fa-regular fa-trash-can"><\/i><\/span>Delete<\/button>`,
+    ].filter(Boolean).join('');
+    const line = (ic, html) => `<div class="dr"><i class="${ic}"><\/i><div>${html}<\/div><\/div>`;
+    $('cSheet').innerHTML = `<div class="sheet-grip"><\/div>
+      <div class="dh"><span class="av lg ${gcls(gs[0])}">${esc(initials(c.name))}<\/span>
+        <div><b>${esc(c.name)}<\/b><div class="sub">${esc(c.memberId)}${tagsHtml(c)}<\/div><\/div><\/div>
+      <div class="dacts">${acts}<\/div>
+      <div class="dl">
+        ${line('fa-solid fa-phone', ph.map((p) => `<a href="tel:${esc(p.replace(/\s/g, ''))}">${esc(p)}<\/a>`).join('') || '<span class="muted">No phone<\/span>')}
+        ${line('fa-solid fa-indian-rupee-sign', c.amount ? `${rupees(c)} <span class="lbl2">Amount<\/span>` : '<span class="muted">No amount<\/span>')}
+        ${line('fa-solid fa-location-dot', addr ? esc(addr) : '<span class="muted">No address<\/span>')}
+        ${c.notes ? line('fa-regular fa-note-sticky', esc(c.notes).replace(/\n/g, '<br>')) : ''}
+        ${c.updatedAt ? line('fa-regular fa-clock', `<span class="muted">Updated ${esc(c.updatedAt)}${c.updatedBy ? ' by ' + esc(c.updatedBy) : ''}<\/span>`) : ''}
+      <\/div>`;
+    $('cSheet').hidden = $('cBg').hidden = false;
+  }
+  function closeDetail() { $('cSheet').hidden = $('cBg').hidden = true; }
+  $('cBg').onclick = closeDetail;
+  $('cSheet').addEventListener('click', (ev) => {
+    const e = ev.target.closest('[data-edit]'), d = ev.target.closest('[data-del]');
+    if (!e && !d) return;
+    closeDetail();
+    const c = data.contacts.find((x) => x.id === (e || d).dataset[e ? 'edit' : 'del']);
+    if (e) openForm(c); else askDelete(c);
+  });
+
   // n = running count of the listed rows (S.No is only a counter).
   function row(c, n) {
     const ph = phones(c);
-    const wa = ph.map(digits).find((d) => /^[6-9]\d{9}$/.test(d));
+    const wa = waNum(c);
     const loc = [c.area, c.city].filter(Boolean).join(', ');
-    const tags = groupsOf(c).map((g) => `<span class="tag ${gcls(g)}">${esc(g)}<\/span>`).join('');
+    const tags = tagsHtml(c);
     return `<tr>
       <td class="name">${esc(c.name)}<span class="ph">${esc(ph.join(', '))}<\/span><span class="tags-m">${tags}<\/span><\/td>
       <td class="mid">${esc(c.memberId)}<\/td>
@@ -482,7 +582,7 @@
       <td class="phone col-phone">${ph.map((p) => `<a href="tel:${esc(p.replace(/\s/g, ''))}">${esc(p)}<\/a>`).join('')}<\/td>
       <td class="col-groups">${tags}<\/td>
       <td class="loc col-loc" title="${esc([c.address, c.area, c.city, c.state, c.pincode].filter(Boolean).join(', '))}">${esc(loc) || '<span class="muted">—<\/span>'}<\/td>
-      <td class="amt">${c.amount ? '₹' + esc(Number(c.amount).toLocaleString('en-IN')) : '<span class="muted">—<\/span>'}<\/td>
+      <td class="amt">${c.amount ? rupees(c) : '<span class="muted">—<\/span>'}<\/td>
       <td class="acts">
         ${wa ? `<a class="act wa" href="https://wa.me/91${wa}" target="_blank" rel="noopener" title="WhatsApp">${icon('wa')}<\/a>` : ''}
         ${data.canEdit ? `<button class="act edit" data-edit="${esc(c.id)}" title="Edit">${icon('edit')}<\/button><button class="act del" data-del="${esc(c.id)}" title="Delete">${icon('trash')}<\/button>` : ''}
@@ -493,13 +593,16 @@
     const h = ev.target.closest('th[data-sort]');
     if (h) { const k = h.dataset.sort; sortAsc = sortKey === k ? !sortAsc : k !== 'amount'; sortKey = k; render(); return; }
     const e = ev.target.closest('[data-edit]'), d = ev.target.closest('[data-del]');
-    if (e) openForm(data.contacts.find((c) => c.id === e.dataset.edit));
-    if (d) {
-      deleting = data.contacts.find((c) => c.id === d.dataset.del);
-      $('delName').textContent = deleting.name + ' — ' + phones(deleting).join(', ');
-      $('dlgDel').showModal();
-    }
+    if (e) return openForm(data.contacts.find((c) => c.id === e.dataset.edit));
+    if (d) return askDelete(data.contacts.find((c) => c.id === d.dataset.del));
+    const o = ev.target.closest('[data-open]');
+    if (o && !ev.target.closest('a')) openDetail(data.contacts.find((c) => c.id === o.dataset.open));
   });
+  function askDelete(c) {
+    deleting = c;
+    $('delName').textContent = c.name + ' — ' + phones(c).join(', ');
+    $('dlgDel').showModal();
+  }
   document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = () => b.closest('dialog').close()));
 
   // ---------- add / edit ----------
@@ -643,7 +746,7 @@
   }
   $('btnMenu').onclick = openMenu;
   $('menuBg').onclick = closeMenu;
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('menuSheet').hidden) closeMenu(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeMenu(); closeDetail(); } });
   // ---------- login / setup ----------
   let setupMode = false;
   function showAuth(isSetup) {
