@@ -98,6 +98,8 @@
   thead th:first-child { border-top-left-radius: 8px; } thead th:last-child { border-top-right-radius: 8px; }
   th, td { padding: 5px 10px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: middle; }
   th { background: #f9fafb; font-weight: 600; color: var(--ink-2); font-size: 12px; position: sticky; top: var(--fh, 49px); z-index: 5; cursor: pointer; user-select: none; white-space: nowrap; }
+  th.nosort { cursor: default; }
+  .mid-badge { margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--accent-ink); background: var(--accent-weak); padding: 2px 8px; border-radius: 999px; }
   th.sorted::after { content: ' ▾'; color: var(--accent); }
   th.sorted.asc::after { content: ' ▴'; }
   tbody tr:hover { background: #fafbfc; }
@@ -113,6 +115,12 @@
   td.loc { color: var(--ink-2); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   td.acts { white-space: nowrap; width: 1%; text-align: right; }
   .tag { display: inline-block; font-size: 11px; line-height: 18px; padding: 0 7px; border-radius: 999px; background: var(--accent-weak); color: var(--accent-ink); margin: 1px 2px 1px 0; white-space: nowrap; }
+  /* group colours: tags in the table and chips in the group pickers */
+  .tag.g-ec, .ts-wrapper.multi .ts-control > div.g-ec { background: #fef3c7; color: #92400e; }
+  .tag.g-sub, .ts-wrapper.multi .ts-control > div.g-sub { background: #e0f2fe; color: #075985; }
+  .ts-wrapper.plugin-remove_button .item.g-ec .remove, .ts-wrapper.plugin-remove_button .item.g-sub .remove { color: inherit; }
+  .gdot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 1px; }
+  .gdot.g-ec { background: #d97706; } .gdot.g-sub { background: #0284c7; }
   .muted { color: var(--ink-3); }
   .msg { padding: 40px; text-align: center; color: var(--ink-2); background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
 
@@ -184,8 +192,6 @@
   .hint { font-size: 12px; color: var(--ink-3); }
   .warn { font-size: 12px; color: var(--danger); }
   @media (max-width: 520px) { .dlg-b { grid-template-columns: 1fr; } }
-  .gm-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
-  .gm-row .cnt { color: var(--ink-3); font-size: 12px; width: 44px; text-align: right; }
 
   /* ---------- login ---------- */
   .auth { min-height: 100dvh; display: grid; place-items: center; padding: 16px; }
@@ -222,7 +228,6 @@
   <div class="brand"><span class="dot">P</span>PMWA Contacts</div>
   <span class="who" id="who"></span>
   <span class="spacer"></span>
-  <button class="btn" id="btnGroups" hidden><i class="fa-solid fa-tags"></i><span class="lbl">Groups</span></button>
   <button class="btn" id="btnCsv" title="Export filtered list"><i class="fa-solid fa-file-arrow-down"></i><span class="lbl">CSV</span></button>
   <button class="btn" id="btnGcsv" title="Export filtered list in Google Contacts import format"><i class="fa-solid fa-address-book"></i><span class="lbl">Google Contacts</span></button>
   <button class="btn" id="btnReload" title="Reload"><i class="fa-solid fa-rotate-right"></i></button>
@@ -242,7 +247,7 @@
 </div>
 
 <div class="filters" id="filters">
-  <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input class="inp" id="q" type="search" placeholder="Search name, phone, member ID, S.No, address…" autocomplete="off"></div>
+  <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input class="inp" id="q" type="search" placeholder="Search name, phone, member ID, address…" autocomplete="off"></div>
   <div class="f wide"><select id="fGroups" multiple placeholder="All groups"></select></div>
   <label class="switch" title="Show only contacts without an address"><input type="checkbox" id="fNoAddr"><span class="sw"></span><span>No address</span></label>
 </div>
@@ -256,13 +261,11 @@
   <form id="frm" autocomplete="off">
     <div class="dlg-h"><span id="dlgTitle">Add contact</span><button type="button" class="icon-btn" data-close><i class="fa-solid fa-xmark"></i></button></div>
     <div class="dlg-b">
-      <label class="fld"><span>Member ID</span><input class="inp" name="memberId" readonly tabindex="-1" style="background:#f9fafb;color:var(--accent-ink);font-weight:600"></label>
-      <label class="fld"><span>Name *</span><input class="inp" name="name" required></label>
+      <label class="fld full"><span>Name *</span><input class="inp" name="name" required></label>
       <label class="fld"><span>Phone *</span><input class="inp" name="phone1" required inputmode="tel"></label>
       <label class="fld"><span>Other phones</span><input class="inp" name="phone2" inputmode="tel" placeholder="comma separated"></label>
       <div class="warn full" id="dupWarn" style="grid-column:1/-1"></div>
-      <div class="fld full"><span>Groups</span><select id="fmGroups" multiple placeholder="Choose or type a new group"></select></div>
-      <label class="fld"><span>S.No</span><input class="inp" name="sno" placeholder="Auto — next number if empty"></label>
+      <div class="fld"><span>Groups</span><select id="fmGroups" multiple placeholder="Choose group"></select></div>
       <label class="fld"><span>Amount (₹)</span><input class="inp" name="amount" inputmode="decimal"></label>
 
       <div class="sect">Address</div>
@@ -291,16 +294,6 @@
   <div class="dlg-f">
     <button type="button" class="btn" data-close>Cancel</button>
     <button type="button" class="btn danger" id="delOk"><i class="fa-regular fa-trash-can"></i>Delete</button>
-  </div>
-</dialog>
-
-<!-- groups -->
-<dialog id="dlgGroups" style="width:min(440px,calc(100vw - 24px))">
-  <div class="dlg-h"><span>Manage groups</span><button type="button" class="icon-btn" data-close><i class="fa-solid fa-xmark"></i></button></div>
-  <div style="padding:14px 16px">
-    <div class="hint" style="margin-bottom:10px">Rename a group on every contact, or clear the name and save to remove it from everyone.</div>
-    <div id="gmList"></div>
-    <div class="warn" id="gmWarn"></div>
   </div>
 </dialog>
 
@@ -349,11 +342,16 @@
   const digits = (s) => { let d = String(s).replace(/\D/g, ''); if (d.length === 12 && d.startsWith('91')) d = d.slice(2); else if (d.length === 11 && d.startsWith('0')) d = d.slice(1); return d; };
   const split = (s) => String(s || '').split(',').map((x) => x.trim()).filter(Boolean);
   const phones = (c) => [c.phone1, ...split(c.phone2)].filter(Boolean);
-  const firstSno = (c) => { const n = parseInt(split(c.sno)[0], 10); return isNaN(n) ? Infinity : n; };
+  const idNum = (c) => { const m = /(\d+)$/.exec(c.memberId); return m ? Number(m[1]) : Infinity; };
   const amt = (c) => parseFloat(c.amount) || 0;
+  // Groups are fixed (server sends them highest rank first); each has its own colour.
+  const GCLS = { 'EC Member': 'g-ec', 'Subscriber': 'g-sub' };
+  const gcls = (g) => GCLS[g] || '';
+  const groupList = () => (data.groups && data.groups.length ? data.groups : Object.keys(GCLS));
+  const grank = (g) => { const i = groupList().indexOf(g); return i < 0 ? 99 : i; };
+  const groupsOf = (c) => split(c.groups).sort((a, b) => grank(a) - grank(b));
   const FA = {"search": "fa-solid fa-magnifying-glass", "plus": "fa-solid fa-plus", "edit": "fa-solid fa-pen", "trash": "fa-regular fa-trash-can", "wa": "fa-brands fa-whatsapp", "download": "fa-solid fa-file-arrow-down", "tags": "fa-solid fa-tags", "reload": "fa-solid fa-rotate-right", "x": "fa-solid fa-xmark", "gc": "fa-solid fa-address-book"};
   const icon = (id) => `<i class="${FA[id]}"><\/i>`;
-  const allGroups = () => [...new Set(data.contacts.flatMap((c) => split(c.groups)))].sort((a, b) => a.localeCompare(b));
   const groupCounts = () => { const n = {}; data.contacts.forEach((c) => split(c.groups).forEach((g) => { n[g] = (n[g] || 0) + 1; })); return n; };
 
   function toast(msg) {
@@ -388,10 +386,12 @@
 
   // ---------- searchable dropdowns ----------
   const tsBase = { maxOptions: null, hideSelected: true };
+  const gItem = (d, e) => `<div class="${gcls(d.value)}">${e(d.text)}<\/div>`;
   const fGroups = new TomSelect('#fGroups', { ...tsBase, plugins: ['remove_button'], onChange: render,
-    render: { option: (d, e) => `<div>${e(d.text)} <span class="muted">${d.count ?? ''}<\/span><\/div>` } });
+    render: { item: gItem, option: (d, e) => `<div><span class="gdot ${gcls(d.value)}"><\/span>${e(d.text)} <span class="muted">${d.count ?? ''}<\/span><\/div>` } });
   $('fNoAddr').onchange = render;
-  const fmGroups = new TomSelect('#fmGroups', { ...tsBase, plugins: ['remove_button'], create: true, createOnBlur: true, persist: false });
+  const fmGroups = new TomSelect('#fmGroups', { ...tsBase, plugins: ['remove_button'], create: false,
+    render: { item: gItem, option: (d, e) => `<div><span class="gdot ${gcls(d.value)}"><\/span>${e(d.text)}<\/div>` } });
   const fmArea = new TomSelect('#fmArea', { maxOptions: null, allowEmptyOption: true, onChange: (v) => {
     const p = pinResults[v]; if (!p) return;
     const f = $('frm'); f.area.value = p.name; f.city.value = p.district; f.state.value = p.state;
@@ -401,9 +401,9 @@
 
   function refreshFilterOptions() {
     const n = groupCounts();
-    const keepG = fGroups.getValue().filter((g) => n[g]);
+    const keepG = fGroups.getValue().filter((g) => groupList().includes(g));
     fGroups.clearOptions();
-    fGroups.addOptions(allGroups().map((g) => ({ value: g, text: g, count: n[g] })));
+    fGroups.addOptions(groupList().map((g) => ({ value: g, text: g, count: n[g] || 0 })));
     fGroups.setValue(keepG, true);
   }
 
@@ -415,7 +415,7 @@
       setAccount(data.me);
       $('who').innerHTML = esc(data.me.name) + ` <span class="role">${esc(data.me.role)}<\/span>`
         + (data.sheetUrl ? ` · <a href="${esc(data.sheetUrl)}" target="_blank" rel="noopener">open sheet<\/a>` : '');
-      $('btnAdd').hidden = $('btnGroups').hidden = !data.canEdit;
+      $('btnAdd').hidden = !data.canEdit;
       $('btnUsers').hidden = data.me.role !== 'admin';
       refreshFilterOptions();
       render();
@@ -433,25 +433,29 @@
       if (noAddr && (c.address || c.area || c.pincode)) return false;
       if (!q) return true;
       if (qd.length >= 3 && phones(c).some((p) => digits(p).includes(qd))) return true;
-      if (split(c.sno).includes(q)) return true;
       if (c.memberId.toLowerCase().includes(q)) return true;
       return [c.name, c.address, c.area, c.city, c.state, c.pincode, c.notes, c.groups].join(' ').toLowerCase().includes(q);
     });
   }
 
   const sorters = {
-    mid: (a, b) => a.memberId.localeCompare(b.memberId),
-    sno: (a, b) => firstSno(a) - firstSno(b) || a.name.localeCompare(b.name),
+    mid: (a, b) => idNum(a) - idNum(b),
     name: (a, b) => a.name.localeCompare(b.name),
     phone: (a, b) => digits(a.phone1).localeCompare(digits(b.phone1)),
-    groups: (a, b) => a.groups.localeCompare(b.groups),
+    groups: (a, b) => grank(groupsOf(a)[0]) - grank(groupsOf(b)[0]) || idNum(a) - idNum(b),
     loc: (a, b) => (a.city + a.area).localeCompare(b.city + b.area),
     amount: (a, b) => amt(a) - amt(b),
   };
 
-  function render() {
+  // Filtered rows in the on-screen order (the CSV export uses the same order and S.No).
+  function shown() {
     const rows = filtered().sort(sorters[sortKey]);
     if (!sortAsc) rows.reverse();
+    return rows;
+  }
+
+  function render() {
+    const rows = shown();
     const total = rows.reduce((t, c) => t + amt(c), 0);
     const any = $('q').value || fGroups.getValue().length || $('fNoAddr').checked;
     $('summary').innerHTML = `<span><b>${rows.length}<\/b> of ${data.contacts.length} contacts<\/span><span>Total <b>₹${total.toLocaleString('en-IN')}<\/b><\/span>`
@@ -461,19 +465,20 @@
     if (!rows.length) { $('list').innerHTML = '<div class="msg">No contacts match these filters.<\/div>'; return; }
     const th = (k, label, cls = '') => `<th data-sort="${k}" class="${cls}${sortKey === k ? ' sorted' + (sortAsc ? ' asc' : '') : ''}">${label}<\/th>`;
     $('list').innerHTML = `<table><thead><tr>
-      ${th('mid', 'Member ID')}${th('sno', 'S.No', 'col-sno')}${th('name', 'Name')}${th('phone', 'Phone', 'col-phone')}${th('groups', 'Groups', 'col-groups')}${th('loc', 'Area / City', 'col-loc')}${th('amount', 'Amount', 'amt')}<th><\/th>
-      <\/tr><\/thead><tbody>${rows.map(row).join('')}<\/tbody><\/table>`;
+      ${th('name', 'Name')}${th('mid', 'Member ID')}<th class="col-sno nosort">S.No<\/th>${th('phone', 'Phone', 'col-phone')}${th('groups', 'Groups', 'col-groups')}${th('loc', 'Area / City', 'col-loc')}${th('amount', 'Amount', 'amt')}<th class="nosort"><\/th>
+      <\/tr><\/thead><tbody>${rows.map((c, i) => row(c, i + 1)).join('')}<\/tbody><\/table>`;
   }
 
-  function row(c) {
+  // n = running count of the listed rows (S.No is only a counter).
+  function row(c, n) {
     const ph = phones(c);
     const wa = ph.map(digits).find((d) => /^[6-9]\d{9}$/.test(d));
     const loc = [c.area, c.city].filter(Boolean).join(', ');
-    const tags = split(c.groups).map((g) => `<span class="tag">${esc(g)}<\/span>`).join('');
+    const tags = groupsOf(c).map((g) => `<span class="tag ${gcls(g)}">${esc(g)}<\/span>`).join('');
     return `<tr>
-      <td class="mid">${esc(c.memberId)}<\/td>
-      <td class="sno col-sno">${esc(c.sno)}<\/td>
       <td class="name">${esc(c.name)}<span class="ph">${esc(ph.join(', '))}<\/span><span class="tags-m">${tags}<\/span><\/td>
+      <td class="mid">${esc(c.memberId)}<\/td>
+      <td class="sno col-sno">${n}<\/td>
       <td class="phone col-phone">${ph.map((p) => `<a href="tel:${esc(p.replace(/\s/g, ''))}">${esc(p)}<\/a>`).join('')}<\/td>
       <td class="col-groups">${tags}<\/td>
       <td class="loc col-loc" title="${esc([c.address, c.area, c.city, c.state, c.pincode].filter(Boolean).join(', '))}">${esc(loc) || '<span class="muted">—<\/span>'}<\/td>
@@ -498,16 +503,16 @@
   document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = () => b.closest('dialog').close()));
 
   // ---------- add / edit ----------
-  const FIELDS = ['name', 'phone1', 'phone2', 'sno', 'amount', 'pincode', 'address', 'area', 'city', 'state', 'notes'];
+  // Member ID is given by the server on save; S.No is only a list counter, so neither is edited here.
+  const FIELDS = ['name', 'phone1', 'phone2', 'amount', 'pincode', 'address', 'area', 'city', 'state', 'notes'];
   function openForm(c) {
     editing = c || null;
     const f = $('frm');
-    $('dlgTitle').textContent = c ? 'Edit contact' : 'Add contact';
-    f.memberId.value = c ? c.memberId : 'Auto — given on save';
+    $('dlgTitle').innerHTML = c ? `Edit contact <span class="mid-badge">${esc(c.memberId)}<\/span>` : 'Add contact';
     FIELDS.forEach((k) => { f[k].value = c ? c[k] : ''; });
     fmGroups.clearOptions();
-    fmGroups.addOptions(allGroups().map((g) => ({ value: g, text: g })));
-    fmGroups.setValue(c ? split(c.groups) : fGroups.getValue(), true);
+    fmGroups.addOptions(groupList().map((g) => ({ value: g, text: g })));
+    fmGroups.setValue(c ? groupsOf(c) : (fGroups.getValue().length ? fGroups.getValue() : ['Subscriber']), true);
     pinResults = [];
     fmArea.clearOptions(); fmArea.clear(true); setPh(fmArea, 'Enter pincode first');
     $('pinHint').textContent = ''; $('warn').textContent = '';
@@ -575,33 +580,6 @@
     } catch (e) { toast(e.message); }
   };
 
-  // ---------- groups ----------
-  function openGroups() {
-    const n = groupCounts();
-    $('gmWarn').textContent = '';
-    $('gmList').innerHTML = allGroups().map((g) =>
-      `<div class="gm-row"><input class="inp" value="${esc(g)}"><span class="cnt">${n[g]}<\/span><button type="button" class="btn" data-save="${esc(g)}">Save<\/button><\/div>`).join('')
-      || '<div class="hint">No groups yet — add one from a contact.<\/div>';
-    if (!$('dlgGroups').open) $('dlgGroups').showModal();
-  }
-  $('btnGroups').onclick = openGroups;
-  $('gmList').addEventListener('click', async (ev) => {
-    const b = ev.target.closest('[data-save]');
-    if (!b) return;
-    const oldName = b.dataset.save;
-    const newName = b.parentElement.querySelector('input').value.trim();
-    if (newName === oldName) return;
-    if (!newName && !confirm(`Remove group "${oldName}" from every contact?`)) return;
-    b.disabled = true;
-    try {
-      const n = await api('renameGroup', oldName, newName);
-      data.contacts.forEach((c) => { c.groups = [...new Set(split(c.groups).map((g) => (g === oldName ? newName : g)).filter(Boolean))].join(', '); });
-      const sel = fGroups.getValue().map((g) => (g === oldName ? newName : g)).filter(Boolean);
-      refreshFilterOptions(); fGroups.setValue(sel, true); render(); openGroups();
-      toast(newName ? `Renamed on ${n} contact(s)` : `Removed from ${n} contact(s)`);
-    } catch (e) { $('gmWarn').textContent = e.message; b.disabled = false; }
-  });
-
   // ---------- export ----------
   function download(name, rows) {
     const cell = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
@@ -610,18 +588,18 @@
     a.download = name; a.click();
   }
   $('btnCsv').onclick = () => download('pmwa_contacts.csv', [
-    ['Member ID', 'S.No', 'Name', 'Phone', 'Other phones', 'Groups', 'Amount', 'Address', 'Area', 'City', 'State', 'Pincode', 'Notes'],
-    ...filtered().map((c) => [c.memberId, c.sno, c.name, c.phone1, c.phone2, c.groups, c.amount, c.address, c.area, c.city, c.state, c.pincode, c.notes])]);
+    ['S.No', 'Name', 'Member ID', 'Phone', 'Other phones', 'Groups', 'Amount', 'Address', 'Area', 'City', 'State', 'Pincode', 'Notes'],
+    ...shown().map((c, i) => [i + 1, c.name, c.memberId, c.phone1, c.phone2, c.groups, c.amount, c.address, c.area, c.city, c.state, c.pincode, c.notes])]);
   // Google Contacts import format: every group becomes a label, plus "PMWA".
   $('btnGcsv').onclick = () => download('pmwa_google_contacts.csv', [
     ['Name', 'Notes', 'Labels', 'Phone 1 - Label', 'Phone 1 - Value', 'Phone 2 - Label', 'Phone 2 - Value',
       'Address 1 - Label', 'Address 1 - Street', 'Address 1 - Extended Address', 'Address 1 - City', 'Address 1 - Region', 'Address 1 - Postal Code', 'Address 1 - Country',
-      'Custom Field 1 - Label', 'Custom Field 1 - Value', 'Custom Field 2 - Label', 'Custom Field 2 - Value', 'Custom Field 3 - Label', 'Custom Field 3 - Value'],
-    ...filtered().map((c) => {
+      'Custom Field 1 - Label', 'Custom Field 1 - Value', 'Custom Field 2 - Label', 'Custom Field 2 - Value'],
+    ...shown().map((c) => {
       const hasAddr = c.address || c.area || c.city || c.pincode;
       return [c.name, c.notes, ['PMWA', ...split(c.groups)].join(' ::: '), 'Mobile', c.phone1, c.phone2 ? 'Mobile' : '', split(c.phone2).join(' ::: '),
         hasAddr ? 'Home' : '', c.address, c.area, c.city, c.state, c.pincode, hasAddr ? 'India' : '',
-        c.sno ? 'PMWA S.No' : '', c.sno, c.amount ? 'PMWA Amount' : '', c.amount, 'PMWA Member ID', c.memberId];
+        'PMWA Member ID', c.memberId, c.amount ? 'PMWA Amount' : '', c.amount];
     })]);
 
   // Table header sticks right under the (possibly wrapped) filter bar.
@@ -634,7 +612,7 @@
 
   // ---------- mobile account menu: mirrors the visible top-bar buttons ----------
   const MENU = {
-    btnGroups: ['Manage groups', '#7c3aed'], btnCsv: ['Export CSV', '#16a34a'], btnGcsv: ['Export for Google Contacts', '#2563eb'],
+    btnCsv: ['Export CSV', '#16a34a'], btnGcsv: ['Export for Google Contacts', '#2563eb'],
     btnReload: ['Reload', '#0891b2'], btnUsers: ['Users', '#ea580c'], btnPw: ['Change password', '#ca8a04'], btnLogout: ['Sign out', '#b42318'],
   };
   function initials(n) { return (n || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase(); }
