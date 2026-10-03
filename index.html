@@ -85,7 +85,8 @@
   .ts-dropdown .create { padding: 6px 10px; }
 
   /* ---------- filter bar ---------- */
-  .filters { background: var(--card); border-bottom: 1px solid var(--line); padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; position: sticky; top: 0; z-index: 10; }
+  .filters { background: var(--card); border-bottom: 1px solid var(--line); padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .stick { position: sticky; top: 0; z-index: 20; }
   .filters .f { flex: 0 1 180px; min-width: 140px; }
   .filters .f.wide { flex-basis: 240px; }
   .filters .brk { display: none; }
@@ -127,7 +128,7 @@
 
   @media (max-width: 760px) {
     .top { padding: 8px 12px; }
-    .filters { padding: 8px 12px; position: static; }
+    .filters { padding: 8px 12px; }
     .filters .f, .filters .f.wide { flex: 1 1 45%; min-width: 0; }
     .summary, .wrap { padding-left: 12px; padding-right: 12px; }
     th { top: 0; }
@@ -280,6 +281,20 @@
 </div>
 
 <div id="app" hidden>
+<!-- mobile account menu (bottom sheet) -->
+<div class="sheet-bg" id="menuBg" hidden></div>
+<div class="sheet" id="menuSheet" hidden role="menu">
+  <div class="sheet-grip"></div>
+  <div class="sheet-h"><span class="av lg" id="avMenu">?</span><div><b id="menuName"></b><div class="muted" id="menuRole"></div></div></div>
+  <div class="sheet-list" id="menuList"></div>
+</div>
+
+<!-- mobile contact details (bottom sheet) -->
+<div class="sheet-bg" id="cBg" hidden></div>
+<div class="sheet" id="cSheet" hidden role="dialog" aria-label="Contact details"></div>
+
+<!-- header + filters stay on screen while the list scrolls -->
+<div class="stick" id="stick">
 <div class="top">
   <div class="brand"><span class="dot">P</span>PMWA Contacts</div>
   <span class="who" id="who"></span>
@@ -294,24 +309,13 @@
   <button class="avatar-btn" id="btnMenu" title="Menu" aria-haspopup="true"><span class="av" id="avTop">?</span></button>
 </div>
 
-<!-- mobile account menu (bottom sheet) -->
-<div class="sheet-bg" id="menuBg" hidden></div>
-<div class="sheet" id="menuSheet" hidden role="menu">
-  <div class="sheet-grip"></div>
-  <div class="sheet-h"><span class="av lg" id="avMenu">?</span><div><b id="menuName"></b><div class="muted" id="menuRole"></div></div></div>
-  <div class="sheet-list" id="menuList"></div>
-</div>
-
-<!-- mobile contact details (bottom sheet) -->
-<div class="sheet-bg" id="cBg" hidden></div>
-<div class="sheet" id="cSheet" hidden role="dialog" aria-label="Contact details"></div>
-
 <div class="filters" id="filters">
   <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input class="inp" id="q" type="search" placeholder="Search name, phone, member ID, address…" autocomplete="off"></div>
   <div class="f wide"><select id="fGroups" multiple placeholder="All groups"></select></div>
   <label class="switch" title="Show only contacts without an address"><input type="checkbox" id="fNoAddr"><span class="sw"></span><span>No address</span></label>
   <div class="brk"></div>
   <label class="switch sw-fav" title="Show only favourite contacts"><input type="checkbox" id="fFav"><span class="sw"></span><span><i class="fa-solid fa-star" style="color:#f59e0b"></i> Favourites</span></label>
+</div>
 </div>
 
 <div class="summary" id="summary">Loading…</div>
@@ -750,9 +754,8 @@
         'PMWA Member ID', c.memberId, c.amount ? 'PMWA Amount' : '', c.amount];
     })]);
 
-  // Table header sticks right under the (possibly wrapped) filter bar.
-  new ResizeObserver(() => document.documentElement.style.setProperty('--fh',
-    getComputedStyle($('filters')).position === 'sticky' ? $('filters').offsetHeight + 'px' : '0px')).observe($('filters'));
+  // Table header sticks right under the (possibly wrapped) header + filter bar.
+  new ResizeObserver(() => document.documentElement.style.setProperty('--fh', $('stick').offsetHeight + 'px')).observe($('stick'));
 
   $('q').addEventListener('input', render);
   $('btnAdd').onclick = () => openForm(null);
