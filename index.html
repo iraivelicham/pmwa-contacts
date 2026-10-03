@@ -88,6 +88,7 @@
   .filters { background: var(--card); border-bottom: 1px solid var(--line); padding: 8px 16px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; position: sticky; top: 0; z-index: 10; }
   .filters .f { flex: 0 1 180px; min-width: 140px; }
   .filters .f.wide { flex-basis: 240px; }
+  .filters .brk { display: none; }
   .summary { padding: 8px 16px 0; color: var(--ink-2); font-size: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .summary b { color: var(--ink); font-weight: 600; }
   .linkish { background: none; border: 0; color: var(--accent); cursor: pointer; font: inherit; padding: 0; }
@@ -219,6 +220,12 @@
     td.acts .act:last-child { margin-bottom: 0; }
     td.acts { padding-left: 4px; }
     .filters .switch { flex: 0 0 auto; }
+    /* phones: search + Favourites share the first row, groups + No address the second */
+    .filters .search { flex: 1 1 0; min-width: 0; order: 1; }
+    .filters .sw-fav { order: 2; }
+    .filters .brk { display: block; flex-basis: 100%; height: 0; order: 3; }
+    .filters .f { order: 4; }
+    .filters .switch:not(.sw-fav) { order: 5; }
   }
 
   /* ---------- dialogs ---------- */
@@ -303,7 +310,8 @@
   <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input class="inp" id="q" type="search" placeholder="Search name, phone, member ID, address…" autocomplete="off"></div>
   <div class="f wide"><select id="fGroups" multiple placeholder="All groups"></select></div>
   <label class="switch" title="Show only contacts without an address"><input type="checkbox" id="fNoAddr"><span class="sw"></span><span>No address</span></label>
-  <label class="switch" title="Show only favourite contacts"><input type="checkbox" id="fFav"><span class="sw"></span><span><i class="fa-solid fa-star" style="color:#f59e0b"></i> Favourites</span></label>
+  <div class="brk"></div>
+  <label class="switch sw-fav" title="Show only favourite contacts"><input type="checkbox" id="fFav"><span class="sw"></span><span><i class="fa-solid fa-star" style="color:#f59e0b"></i> Favourites</span></label>
 </div>
 
 <div class="summary" id="summary">Loading…</div>
