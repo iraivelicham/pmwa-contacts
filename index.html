@@ -190,6 +190,8 @@
   .ci .l1 { display: flex; align-items: baseline; gap: 8px; }
   .ci .nm { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; line-height: 1.35; overflow-wrap: break-word; }
   .ci .nm .idp { display: inline-block; min-width: 0; margin-right: 6px; padding: 1px 6px; font-size: 10.5px; vertical-align: 1px; border-radius: 6px; }
+  .ci .adr { margin-top: 3px; font-size: 12px; line-height: 1.4; color: var(--ink-2); overflow-wrap: break-word; }
+  .ci .adr i { margin-right: 5px; font-size: 11px; color: var(--ink-3); }
   .ci .side { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   .ci .side .fav { height: 30px; }
   .ci .ph1 { margin-top: 2px; font-size: 13px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
@@ -553,14 +555,15 @@
     title="${c.fav ? 'Remove from favourites' : 'Add to favourites'}" aria-pressed="${c.fav ? 'true' : 'false'}"><i class="fa-${c.fav ? 'solid' : 'regular'} fa-star"><\/i><\/button>`;
   const tagsHtml = (c) => groupsOf(c).map((g) => `<span class="tag ${gcls(g)}">${esc(g)}<\/span>`).join('');
 
-  // One item of the mobile list: ID pill (group colour) · full name + amount · all phones · groups + area · star · WhatsApp.
+  // One item of the mobile list: ID pill (group colour) · full name + amount · all phones · groups · full address + pincode · star · WhatsApp.
   function item(c) {
-    const wa = waNum(c), loc = addrText(c);
+    const wa = waNum(c), loc = addrPin(c);
     return `<div class="ci" data-open="${esc(c.id)}">
       <div class="bd">
         <div class="l1"><span class="nm"><span class="idp ${gcls(groupsOf(c)[0])}">${esc(c.memberId)}<\/span>${esc(c.name)}<\/span>${c.amount ? `<span class="am">${rupees(c)}<\/span>` : ''}<\/div>
         ${phones(c).length ? `<div class="ph1">${phones(c).map(esc).join(', ')}<\/div>` : ''}
-        <div class="l2">${tagsHtml(c)}${loc ? esc(loc) : ''}<\/div>
+        <div class="l2">${tagsHtml(c)}<\/div>
+        ${loc ? `<div class="adr"><i class="fa-solid fa-location-dot"><\/i>${esc(loc)}<\/div>` : ''}
       <\/div>
       <div class="side">${star(c)}${wa ? `<a class="waq" href="https://wa.me/91${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${icon('wa')}<\/a>` : ''}<\/div>
     <\/div>`;
