@@ -148,6 +148,13 @@
   .switch input:checked ~ span:last-child { color: var(--accent-ink); }
   .switch input:focus-visible + .sw { box-shadow: 0 0 0 3px rgba(31,111,67,.25); }
 
+  /* ---------- favourite star ---------- */
+  .fav { flex: none; border: 0; background: none; padding: 0 6px 0 0; font-size: 15px; line-height: 1; color: var(--line-2); cursor: pointer; vertical-align: -1px; }
+  .fav.on { color: #f59e0b; }
+  .fav:disabled { cursor: default; }
+  .fav:not(:disabled):hover { color: #f59e0b; }
+  .ci .fav { width: 32px; height: 36px; padding: 0; font-size: 18px; }
+
   /* ---------- account avatar + mobile menu sheet ---------- */
   .avatar-btn { display: none; border: 0; background: none; padding: 0; cursor: pointer; }
   .av { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 600; font-size: 13px; letter-spacing: .02em; flex: none; }
@@ -296,6 +303,7 @@
   <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input class="inp" id="q" type="search" placeholder="Search name, phone, member ID, address…" autocomplete="off"></div>
   <div class="f wide"><select id="fGroups" multiple placeholder="All groups"></select></div>
   <label class="switch" title="Show only contacts without an address"><input type="checkbox" id="fNoAddr"><span class="sw"></span><span>No address</span></label>
+  <label class="switch" title="Show only favourite contacts"><input type="checkbox" id="fFav"><span class="sw"></span><span><i class="fa-solid fa-star" style="color:#f59e0b"></i> Favourites</span></label>
 </div>
 
 <div class="summary" id="summary">Loading…</div>
@@ -308,7 +316,7 @@
     <div class="dlg-h"><span id="dlgTitle">Add contact</span><button type="button" class="icon-btn" data-close><i class="fa-solid fa-xmark"></i></button></div>
     <div class="dlg-b">
       <label class="fld full"><span>Name *</span><input class="inp" name="name" required></label>
-      <label class="fld"><span>Phone *</span><input class="inp" name="phone1" required inputmode="tel"></label>
+      <label class="fld"><span>Phone</span><input class="inp" name="phone1" inputmode="tel"></label>
       <label class="fld"><span>Other phones</span><input class="inp" name="phone2" inputmode="tel" placeholder="comma separated"></label>
       <div class="warn full" id="dupWarn" style="grid-column:1/-1"></div>
       <div class="fld"><span>Groups</span><select id="fmGroups" multiple placeholder="Choose group"></select></div>
@@ -439,6 +447,7 @@
   const fGroups = new TomSelect('#fGroups', { ...tsBase, plugins: ['remove_button'], onChange: render,
     render: { item: gItem, option: (d, e) => `<div><span class="gdot ${gcls(d.value)}"><\/span>${e(d.text)} <span class="muted">${d.count ?? ''}<\/span><\/div>` } });
   $('fNoAddr').onchange = render;
+  $('fFav').onchange = render;
   const fmGroups = new TomSelect('#fmGroups', { ...tsBase, plugins: ['remove_button'], create: false,
     render: { item: gItem, option: (d, e) => `<div><span class="gdot ${gcls(d.value)}"><\/span>${e(d.text)}<\/div>` } });
 
@@ -470,10 +479,11 @@
 
   function filtered() {
     const q = $('q').value.trim().toLowerCase(), qd = digits(q);
-    const gs = fGroups.getValue(), noAddr = $('fNoAddr').checked;
+    const gs = fGroups.getValue(), noAddr = $('fNoAddr').checked, fav = $('fFav').checked;
     return data.contacts.filter((c) => {
       if (gs.length && !split(c.groups).some((g) => gs.includes(g))) return false;
       if (noAddr && (c.address || c.area || c.pincode)) return false;
+      if (fav && !c.fav) return false;
       if (!q) return true;
       if (qd.length >= 3 && phones(c).some((p) => digits(p).includes(qd))) return true;
       if (c.memberId.toLowerCase().includes(q)) return true;
@@ -505,12 +515,12 @@
   function render() {
     const rows = shown();
     const total = rows.reduce((t, c) => t + amt(c), 0);
-    const any = $('q').value || fGroups.getValue().length || $('fNoAddr').checked;
+    const any = $('q').value || fGroups.getValue().length || $('fNoAddr').checked || $('fFav').checked;
     $('summary').innerHTML = `<span><b>${rows.length}<\/b> of ${data.contacts.length} contacts<\/span><span>Total <b>₹${total.toLocaleString('en-IN')}<\/b><\/span>`
       + (any ? '<button class="linkish" id="clearF">Clear filters<\/button>' : '')
       + (mobile.matches ? `<select class="sortsel" id="sortSel" aria-label="Sort">${SORTS.map(([k, asc, label]) =>
         `<option value="${k}"${k === sortKey ? ' selected' : ''}>${label}<\/option>`).join('')}<\/select>` : '');
-    if ($('clearF')) $('clearF').onclick = () => { $('q').value = ''; fGroups.clear(true); $('fNoAddr').checked = false; render(); };
+    if ($('clearF')) $('clearF').onclick = () => { $('q').value = ''; fGroups.clear(true); $('fNoAddr').checked = $('fFav').checked = false; render(); };
     if ($('sortSel')) $('sortSel').onchange = (e) => { const s = SORTS.find((x) => x[0] === e.target.value); sortKey = s[0]; sortAsc = s[1]; render(); };
 
     if (!rows.length) { $('list').innerHTML = '<div class="msg">No contacts match these filters.<\/div>'; return; }
@@ -523,6 +533,9 @@
 
   const waNum = (c) => phones(c).map(digits).find((d) => /^[6-9]\d{9}$/.test(d));
   const rupees = (c) => '₹' + Number(c.amount).toLocaleString('en-IN');
+  // Star toggle (editors) or read-only star (viewers).
+  const star = (c) => `<button type="button" class="fav${c.fav ? ' on' : ''}" data-fav="${esc(c.id)}"${data.canEdit ? '' : ' disabled'}
+    title="${c.fav ? 'Remove from favourites' : 'Add to favourites'}" aria-pressed="${c.fav ? 'true' : 'false'}"><i class="fa-${c.fav ? 'solid' : 'regular'} fa-star"><\/i><\/button>`;
   const tagsHtml = (c) => groupsOf(c).map((g) => `<span class="tag ${gcls(g)}">${esc(g)}<\/span>`).join('');
 
   // One line of the mobile list: ID pill (group colour) · name + amount · groups + phone + area · WhatsApp.
@@ -534,6 +547,7 @@
         <div class="l1"><span class="nm">${esc(c.name)}<\/span>${c.amount ? `<span class="am">${rupees(c)}<\/span>` : ''}<\/div>
         <div class="l2">${tagsHtml(c)}${esc(phones(c)[0] || '')}${loc ? ' · ' + esc(loc) : ''}<\/div>
       <\/div>
+      ${star(c)}
       ${wa ? `<a class="waq" href="https://wa.me/91${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${icon('wa')}<\/a>` : '<span class="waq none"><\/span>'}
     <\/div>`;
   }
@@ -552,7 +566,7 @@
     const line = (ic, html) => `<div class="dr"><i class="${ic}"><\/i><div>${html}<\/div><\/div>`;
     $('cSheet').innerHTML = `<div class="sheet-grip"><\/div>
       <div class="dh"><span class="av lg ${gcls(gs[0])}">${esc(initials(c.name))}<\/span>
-        <div><b>${esc(c.name)}<\/b><div class="sub">${esc(c.memberId)}${tagsHtml(c)}<\/div><\/div><\/div>
+        <div><b>${star(c)}${esc(c.name)}<\/b><div class="sub">${esc(c.memberId)}${tagsHtml(c)}<\/div><\/div><\/div>
       <div class="dacts">${acts}<\/div>
       <div class="dl">
         ${line('fa-solid fa-phone', ph.map((p) => `<a href="tel:${esc(p.replace(/\s/g, ''))}">${esc(p)}<\/a>`).join('') || '<span class="muted">No phone<\/span>')}
@@ -566,6 +580,8 @@
   function closeDetail() { $('cSheet').hidden = $('cBg').hidden = true; }
   $('cBg').onclick = closeDetail;
   $('cSheet').addEventListener('click', (ev) => {
+    const fv = ev.target.closest('[data-fav]');
+    if (fv) return toggleFav(fv.dataset.fav);
     const e = ev.target.closest('[data-edit]'), d = ev.target.closest('[data-del]');
     if (!e && !d) return;
     closeDetail();
@@ -580,7 +596,7 @@
     const loc = addrPin(c);
     const tags = tagsHtml(c);
     return `<tr>
-      <td class="name">${esc(c.name)}<span class="ph">${esc(ph.join(', '))}<\/span><span class="tags-m">${tags}<\/span><\/td>
+      <td class="name">${star(c)}${esc(c.name)}<span class="ph">${esc(ph.join(', '))}<\/span><span class="tags-m">${tags}<\/span><\/td>
       <td class="mid">${esc(c.memberId)}<\/td>
       <td class="sno col-sno">${n}<\/td>
       <td class="phone col-phone">${ph.map((p) => `<a href="tel:${esc(p.replace(/\s/g, ''))}">${esc(p)}<\/a>`).join('')}<\/td>
@@ -593,7 +609,21 @@
       <\/td><\/tr>`;
   }
 
+  // Optimistic: flip at once, undo if the server refuses.
+  async function toggleFav(id) {
+    const c = data.contacts.find((x) => x.id === id);
+    if (!c || !data.canEdit) return;
+    const on = !c.fav;
+    c.fav = on ? '1' : '';
+    render();
+    if (!$('cSheet').hidden) openDetail(c);
+    try { await api('setFavourite', id, on); toast(on ? 'Added to favourites' : 'Removed from favourites'); }
+    catch (e) { c.fav = on ? '' : '1'; render(); if (!$('cSheet').hidden) openDetail(c); toast(e.message); }
+  }
+
   $('list').addEventListener('click', (ev) => {
+    const fv = ev.target.closest('[data-fav]');
+    if (fv) { ev.stopPropagation(); return toggleFav(fv.dataset.fav); }
     const h = ev.target.closest('th[data-sort]');
     if (h) { const k = h.dataset.sort; sortAsc = sortKey === k ? !sortAsc : k !== 'amount'; sortKey = k; render(); return; }
     const e = ev.target.closest('[data-edit]'), d = ev.target.closest('[data-del]');
@@ -698,8 +728,8 @@
     a.download = name; a.click();
   }
   $('btnCsv').onclick = () => download('pmwa_contacts.csv', [
-    ['S.No', 'Name', 'Member ID', 'Phone', 'Other phones', 'Groups', 'Amount', 'Address', 'Pincode', 'Notes'],
-    ...shown().map((c, i) => [i + 1, c.name, c.memberId, c.phone1, c.phone2, c.groups, c.amount, addrText(c), c.pincode, c.notes])]);
+    ['S.No', 'Name', 'Member ID', 'Phone', 'Other phones', 'Groups', 'Amount', 'Address', 'Pincode', 'Notes', 'Favourite'],
+    ...shown().map((c, i) => [i + 1, c.name, c.memberId, c.phone1, c.phone2, c.groups, c.amount, addrText(c), c.pincode, c.notes, c.fav ? 'Yes' : ''])]);
   // Google Contacts import format: every group becomes a label, plus "PMWA".
   $('btnGcsv').onclick = () => download('pmwa_google_contacts.csv', [
     ['Name', 'Notes', 'Labels', 'Phone 1 - Label', 'Phone 1 - Value', 'Phone 2 - Label', 'Phone 2 - Value',
