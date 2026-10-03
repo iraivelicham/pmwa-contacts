@@ -478,6 +478,16 @@
   const QUIET = ['setFavourite'];
   let busyN = 1; // the page starts covered until the first session check is done
   function busy(on) { busyN = Math.max(0, busyN + (on ? 1 : -1)); $('busy').hidden = busyN === 0; }
+  // Local work the user waits on (filters, sorting, export): show the loader, let it paint, run,
+  // and keep it up at least ~¼ s so it reads as feedback rather than a flash.
+  function busyRun(fn) {
+    busy(true);
+    const t0 = performance.now();
+    requestAnimationFrame(() => setTimeout(() => {
+      try { fn(); } finally { setTimeout(() => busy(false), Math.max(0, 250 - (performance.now() - t0))); }
+    }, 0));
+  }
+  const renderBusy = () => busyRun(render);
   function call(fn, ...args) {
     if (QUIET.includes(fn)) return rawCall(fn, ...args);
     busy(true);
@@ -496,10 +506,10 @@
   // ---------- searchable dropdowns ----------
   const tsBase = { maxOptions: null, hideSelected: true };
   const gItem = (d, e) => `<div class="${gcls(d.value)}">${e(d.text)}<\/div>`;
-  const fGroups = new TomSelect('#fGroups', { ...tsBase, plugins: ['remove_button'], onChange: render,
+  const fGroups = new TomSelect('#fGroups', { ...tsBase, plugins: ['remove_button'], onChange: renderBusy,
     render: { item: gItem, option: (d, e) => `<div><span class="gdot ${gcls(d.value)}"><\/span>${e(d.text)} <span class="muted">${d.count ?? ''}<\/span><\/div>` } });
-  $('fNoAddr').onchange = render;
-  $('fFav').onchange = render;
+  $('fNoAddr').onchange = renderBusy;
+  $('fFav').onchange = renderBusy;
   const fmGroups = new TomSelect('#fmGroups', { ...tsBase, plugins: ['remove_button'], create: false,
     render: { item: gItem, option: (d, e) => `<div><span class="gdot ${gcls(d.value)}"><\/span>${e(d.text)}<\/div>` } });
 
@@ -572,8 +582,8 @@
       + (any ? '<button class="linkish" id="clearF">Clear filters<\/button>' : '')
       + (mobile.matches ? `<select class="sortsel" id="sortSel" aria-label="Sort">${SORTS.map(([k, asc, label]) =>
         `<option value="${k}"${k === sortKey ? ' selected' : ''}>${label}<\/option>`).join('')}<\/select>` : '');
-    if ($('clearF')) $('clearF').onclick = () => { $('q').value = ''; fGroups.clear(true); $('fNoAddr').checked = $('fFav').checked = false; render(); };
-    if ($('sortSel')) $('sortSel').onchange = (e) => { const s = SORTS.find((x) => x[0] === e.target.value); sortKey = s[0]; sortAsc = s[1]; render(); };
+    if ($('clearF')) $('clearF').onclick = () => { $('q').value = ''; fGroups.clear(true); $('fNoAddr').checked = $('fFav').checked = false; renderBusy(); };
+    if ($('sortSel')) $('sortSel').onchange = (e) => { const s = SORTS.find((x) => x[0] === e.target.value); sortKey = s[0]; sortAsc = s[1]; renderBusy(); };
 
     if (!rows.length) { $('list').innerHTML = '<div class="msg">No contacts match these filters.<\/div>'; return; }
     if (mobile.matches) { $('list').innerHTML = `<div class="clist">${rows.map(item).join('')}<\/div>`; return; }
@@ -677,7 +687,7 @@
     const fv = ev.target.closest('[data-fav]');
     if (fv) { ev.stopPropagation(); return toggleFav(fv.dataset.fav); }
     const h = ev.target.closest('th[data-sort]');
-    if (h) { const k = h.dataset.sort; sortAsc = sortKey === k ? !sortAsc : k !== 'amount'; sortKey = k; render(); return; }
+    if (h) { const k = h.dataset.sort; sortAsc = sortKey === k ? !sortAsc : k !== 'amount'; sortKey = k; renderBusy(); return; }
     const e = ev.target.closest('[data-edit]'), d = ev.target.closest('[data-del]');
     if (e) return openForm(data.contacts.find((c) => c.id === e.dataset.edit));
     if (d) return askDelete(data.contacts.find((c) => c.id === d.dataset.del));
@@ -759,9 +769,11 @@
   // ---------- export ----------
   function download(name, rows) {
     const cell = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob(['﻿' + rows.map((r) => r.map(cell).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' }));
-    a.download = name; a.click();
+    busyRun(() => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob(['﻿' + rows.map((r) => r.map(cell).join(',')).join('\n')], { type: 'text/csv;charset=utf-8' }));
+      a.download = name; a.click();
+    });
   }
   $('btnCsv').onclick = () => download('pmwa_contacts.csv', [
     ['S.No', 'Name', 'Member ID', 'Phone', 'Other phones', 'Groups', 'Amount', 'Address', 'Pincode', 'Notes', 'Favourite'],
