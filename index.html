@@ -311,9 +311,9 @@
     <div class="bar"></div>
     <span id="busyMsg">Loading…</span>
     <div class="ayah">
-      <div class="ar" id="ayahAr" lang="ar" dir="rtl">فَإِنَّ مَعَ الْعُسْرِ يُسْرًا</div>
-      <div class="en" id="ayahEn">“For indeed, with hardship comes ease.”</div>
-      <div class="ref" id="ayahRef">Qur’an · Ash-Sharh 94:5</div>
+      <div class="ar" lang="ar" dir="rtl">إِنَّ اللَّهَ مَعَ الصَّابِرِينَ</div>
+      <div class="en">“Indeed, Allah is with the patient.”</div>
+      <div class="ref">Qur’an · Al-Baqarah 2:153</div>
     </div>
   </div>
 </dialog>
@@ -494,26 +494,11 @@
   // the star toggle is optimistic and stays quiet.
   const QUIET = ['setFavourite'];
   let busyN = 1; // the page starts covered until the first session check is done
-  // Short verses on patience and trust, one picked each time the loader opens: [Arabic, English, reference].
-  const AYAT = [
-    ['فَإِنَّ مَعَ الْعُسْرِ يُسْرًا', 'For indeed, with hardship comes ease.', 'Ash-Sharh 94:5'],
-    ['إِنَّ اللَّهَ مَعَ الصَّابِرِينَ', 'Indeed, Allah is with the patient.', 'Al-Baqarah 2:153'],
-    ['فَصَبْرٌ جَمِيلٌ', 'So patience is most fitting.', 'Yusuf 12:18'],
-    ['إِنَّمَا يُوَفَّى الصَّابِرُونَ أَجْرَهُم بِغَيْرِ حِسَابٍ', 'Indeed, the patient will be given their reward without account.', 'Az-Zumar 39:10'],
-    ['وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ', 'And whoever relies upon Allah, He is sufficient for him.', 'At-Talaq 65:3'],
-    ['وَاصْبِرْ وَمَا صَبْرُكَ إِلَّا بِاللَّهِ', 'And be patient, and your patience is not but through Allah.', 'An-Nahl 16:127'],
-  ];
-  let ayahAt = 0;
-  function nextAyah() {
-    const [ar, en, ref] = AYAT[ayahAt = (ayahAt + 1) % AYAT.length];
-    $('ayahAr').textContent = ar; $('ayahEn').textContent = '“' + en + '”'; $('ayahRef').textContent = 'Qur’an · ' + ref;
-  }
   function busy(on) {
     busyN = Math.max(0, busyN + (on ? 1 : -1));
     const d = $('busy');
     if (!busyN) { if (d.open) d.close(); return; }
     if (d.open && d.matches(':modal')) return;
-    if (!d.open) nextAyah();
     if (d.open) d.close(); // open from page load (not modal): reopen as modal so it covers dialogs too
     d.showModal();
   }
