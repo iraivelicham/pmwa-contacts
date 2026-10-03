@@ -673,6 +673,12 @@
     const other = data.contacts.find((c) => (!editing || c.id !== editing.id) && phones(c).map(digits).some((d) => mine.includes(d)));
     $('dupWarn').textContent = other ? `This number already belongs to "${other.name}"` : '';
   }
+  // Names in Title Case while typing (same rule as titleCase_ in Code.gs); the caret stays put.
+  const titleCase = (s) => String(s || '').toLowerCase().replace(/(^|[^\p{L}\p{M}'’])(\p{Ll})/gu, (m, a, b) => a + b.toUpperCase());
+  $('frm').name.addEventListener('input', (e) => {
+    const el = e.target, at = el.selectionStart, v = titleCase(el.value);
+    if (v !== el.value) { el.value = v; el.setSelectionRange(at, at); }
+  });
   $('frm').phone1.addEventListener('input', dupWarning);
   $('frm').phone2.addEventListener('input', dupWarning);
 
