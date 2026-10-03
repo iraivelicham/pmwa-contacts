@@ -155,7 +155,7 @@
   .fav.on { color: #f59e0b; }
   .fav:disabled { cursor: default; }
   .fav:not(:disabled):hover { color: #f59e0b; }
-  .ci .fav { width: 32px; height: 36px; padding: 0; font-size: 18px; }
+  .ci .fav { width: 36px; height: 36px; padding: 0; font-size: 18px; }
 
   /* ---------- account avatar + mobile menu sheet ---------- */
   .avatar-btn { display: none; border: 0; background: none; padding: 0; cursor: pointer; }
@@ -180,7 +180,7 @@
 
   /* ---------- mobile contact list (replaces the table under 760px) ---------- */
   .clist { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
-  .ci { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .ci { display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px; border-bottom: 1px solid var(--line); cursor: pointer; -webkit-tap-highlight-color: transparent; }
   .ci:last-child { border-bottom: 0; }
   .ci:active { background: #f3f4f6; }
   .idp { flex: none; min-width: 50px; text-align: center; font-size: 11px; font-weight: 700; padding: 5px 6px; border-radius: 8px; background: var(--accent-weak); color: var(--accent-ink); font-variant-numeric: tabular-nums; }
@@ -188,12 +188,15 @@
   .idp.g-sub { background: #e0f2fe; color: #075985; }
   .ci .bd { flex: 1; min-width: 0; }
   .ci .l1 { display: flex; align-items: baseline; gap: 8px; }
-  .ci .nm { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ci .nm { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; line-height: 1.35; overflow-wrap: break-word; }
+  .ci .nm .idp { display: inline-block; min-width: 0; margin-right: 6px; padding: 1px 6px; font-size: 10.5px; vertical-align: 1px; border-radius: 6px; }
+  .ci .side { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .ci .side .fav { height: 30px; }
+  .ci .ph1 { margin-top: 2px; font-size: 13px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .ci .am { flex: none; font-weight: 600; font-size: 13px; font-variant-numeric: tabular-nums; }
   .ci .l2 { margin-top: 2px; color: var(--ink-2); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .ci .l2 .tag { font-size: 10px; line-height: 16px; padding: 0 6px; margin: 0 4px 0 0; vertical-align: 1px; }
   .waq { flex: none; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; color: #128c4b; background: #e9f8ef; font-size: 18px; text-decoration: none; }
-  .waq.none { visibility: hidden; }
   .sortsel { margin-left: auto; height: 28px; border: 1px solid var(--line-2); border-radius: 999px; padding: 0 26px 0 10px; font: inherit; font-size: 12px; color: var(--ink); -webkit-appearance: none; appearance: none;
     background: var(--card) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") right 9px center / 11px no-repeat; }
 
@@ -550,17 +553,16 @@
     title="${c.fav ? 'Remove from favourites' : 'Add to favourites'}" aria-pressed="${c.fav ? 'true' : 'false'}"><i class="fa-${c.fav ? 'solid' : 'regular'} fa-star"><\/i><\/button>`;
   const tagsHtml = (c) => groupsOf(c).map((g) => `<span class="tag ${gcls(g)}">${esc(g)}<\/span>`).join('');
 
-  // One line of the mobile list: ID pill (group colour) · name + amount · groups + phone + area · WhatsApp.
+  // One item of the mobile list: ID pill (group colour) · full name + amount · all phones · groups + area · star · WhatsApp.
   function item(c) {
     const wa = waNum(c), loc = addrText(c);
     return `<div class="ci" data-open="${esc(c.id)}">
-      <span class="idp ${gcls(groupsOf(c)[0])}">${esc(c.memberId)}<\/span>
       <div class="bd">
-        <div class="l1"><span class="nm">${esc(c.name)}<\/span>${c.amount ? `<span class="am">${rupees(c)}<\/span>` : ''}<\/div>
-        <div class="l2">${tagsHtml(c)}${esc(phones(c)[0] || '')}${loc ? ' · ' + esc(loc) : ''}<\/div>
+        <div class="l1"><span class="nm"><span class="idp ${gcls(groupsOf(c)[0])}">${esc(c.memberId)}<\/span>${esc(c.name)}<\/span>${c.amount ? `<span class="am">${rupees(c)}<\/span>` : ''}<\/div>
+        ${phones(c).length ? `<div class="ph1">${phones(c).map(esc).join(', ')}<\/div>` : ''}
+        <div class="l2">${tagsHtml(c)}${loc ? esc(loc) : ''}<\/div>
       <\/div>
-      ${star(c)}
-      ${wa ? `<a class="waq" href="https://wa.me/91${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${icon('wa')}<\/a>` : '<span class="waq none"><\/span>'}
+      <div class="side">${star(c)}${wa ? `<a class="waq" href="https://wa.me/91${wa}" target="_blank" rel="noopener" aria-label="WhatsApp">${icon('wa')}<\/a>` : ''}<\/div>
     <\/div>`;
   }
 
