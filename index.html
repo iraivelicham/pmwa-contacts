@@ -247,10 +247,6 @@
   .hint { font-size: 12px; color: var(--ink-3); }
   .warn { font-size: 12px; color: var(--danger); }
   @media (max-width: 520px) { .dlg-b { grid-template-columns: 1fr; } }
-  .pinrow { display: flex; align-items: center; gap: 10px; }
-  .pinrow .inp { width: 130px; flex: none; }
-  .pin-sugg { display: flex; flex-wrap: wrap; gap: 6px; }
-  .pin-sugg:empty { display: none; }
   .chip { border: 1px solid var(--line-2); background: var(--card); border-radius: 999px; padding: 3px 10px; font: inherit; font-size: 12px; color: var(--ink); cursor: pointer; }
   .chip:hover { border-color: var(--accent); background: var(--accent-weak); color: var(--accent-ink); }
   .chip i { margin-right: 4px; font-size: 10px; color: var(--accent); }
@@ -339,12 +335,7 @@
       <div class="fld"><span>Groups</span><select id="fmGroups" multiple placeholder="Choose group"></select></div>
       <label class="fld"><span>Amount (₹)</span><input class="inp" name="amount" inputmode="decimal"></label>
 
-      <div class="sect">Address</div>
-      <div class="fld full"><span>Pincode</span>
-        <div class="pinrow"><input class="inp" name="pincode" inputmode="numeric" maxlength="6" placeholder="6 digits"><span class="hint" id="pinHint"></span></div>
-        <div class="pin-sugg" id="pinSugg"></div>
-      </div>
-      <label class="fld full"><span>Address</span><textarea class="inp" name="address" rows="3" placeholder="Door no., street, area, city"></textarea></label>
+      <label class="fld full"><span>Address</span><textarea class="inp" name="address" rows="3" placeholder="Door no., street, area, city, pincode"></textarea></label>
 
       <label class="fld full"><span>Notes</span><textarea class="inp" name="notes" rows="2"></textarea></label>
       <div class="warn" id="warn" style="grid-column:1/-1"></div>
@@ -404,7 +395,7 @@
 
 <script>
   let data = { contacts: [], canEdit: false };
-  let editing = null, deleting = null, pinResults = [];
+  let editing = null, deleting = null;
   let sortKey = 'mid', sortAsc = true;
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -658,20 +649,19 @@
 
   // ---------- add / edit ----------
   // Member ID is given by the server on save; S.No is only a list counter, so neither is edited here.
-  // Address is one free-text box (older area/city/state values are folded into it).
-  const FIELDS = ['name', 'phone1', 'phone2', 'amount', 'pincode', 'address', 'notes'];
+  // Address is one free-text box (older area/city/state/pincode values are folded into it).
+  const FIELDS = ['name', 'phone1', 'phone2', 'amount', 'address', 'notes'];
   function openForm(c) {
     editing = c || null;
     const f = $('frm');
     $('dlgTitle').innerHTML = c ? `Edit contact <span class="mid-badge">${esc(c.memberId)}<\/span>` : 'Add contact';
-    FIELDS.forEach((k) => { f[k].value = c ? c[k] : ''; });
-    if (c) f.address.value = addrLines(c).join('\n');
+    FIELDS.forEach((k) => { f[k].value = (c && c[k]) || ''; });
+    // an older separate pincode is shown at the end of the address and saved as part of it
+    if (c) f.address.value = addrLines(c).join('\n') + (c.pincode && !addrText(c).includes(c.pincode) ? ' - ' + c.pincode : '');
     fmGroups.clearOptions();
     fmGroups.addOptions(groupList().map((g) => ({ value: g, text: g })));
     fmGroups.setValue(c ? groupsOf(c) : (fGroups.getValue().length ? fGroups.getValue() : ['Subscriber']), true);
-    pinResults = [];
-    $('pinSugg').innerHTML = '';
-    $('pinHint').textContent = ''; $('warn').textContent = '';
+    $('warn').textContent = '';
     dupWarning();
     $('dlg').showModal();
     f.name.focus();
@@ -685,27 +675,6 @@
   }
   $('frm').phone1.addEventListener('input', dupWarning);
   $('frm').phone2.addEventListener('input', dupWarning);
-
-  // 6-digit pincode -> post offices as chips; tapping one adds "Area, District, State" to the address.
-  $('frm').pincode.addEventListener('input', async (e) => {
-    e.target.value = e.target.value.replace(/\D/g, '');
-    $('pinSugg').innerHTML = '';
-    if (e.target.value.length !== 6) { $('pinHint').textContent = ''; return; }
-    $('pinHint').textContent = 'Looking up…';
-    try {
-      pinResults = await api('lookupPincode', e.target.value);
-      if (!pinResults.length) { $('pinHint').textContent = 'Pincode not found'; return; }
-      $('pinHint').textContent = `${pinResults[0].district}, ${pinResults[0].state} · tap an area to add it`;
-      $('pinSugg').innerHTML = pinResults.map((p, i) => `<button type="button" class="chip" data-pin="${i}"><i class="fa-solid fa-plus"><\/i>${esc(p.name)}<\/button>`).join('');
-    } catch (err) { $('pinHint').textContent = err.message; }
-  });
-  $('pinSugg').addEventListener('click', (e) => {
-    const b = e.target.closest('[data-pin]'); if (!b) return;
-    const p = pinResults[b.dataset.pin], ta = $('frm').address;
-    const line = [p.name, p.district, p.state].filter((x, i, a) => x && a.indexOf(x) === i).join(', ');
-    if (!ta.value.includes(line)) ta.value = ta.value.trim() ? ta.value.trimEnd() + '\n' + line : line;
-    ta.focus();
-  });
 
   $('frm').addEventListener('submit', async (ev) => {
     ev.preventDefault();
