@@ -262,10 +262,44 @@
   .role { font-size: 11px; padding: 1px 7px; border-radius: 999px; background: #eef2ff; color: #3730a3; text-transform: capitalize; }
   .utable th { position: static; }
   .utable td, .utable th { font-size: 12px; }
+  /* ---------- full-screen loading (mosque) ---------- */
+  #busy { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; background: rgba(245,246,248,.82);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); animation: fadeIn .15s ease-out; }
+  #busy .bx { display: grid; justify-items: center; gap: 10px; color: var(--accent-ink); font-weight: 600; font-size: 14px; letter-spacing: .02em; }
+  #busy svg { width: 128px; height: 112px; overflow: visible; }
+  #busy .mq { fill: var(--accent); }
+  #busy .door { fill: #fff; opacity: .9; }
+  #busy .moon { fill: #d4a017; transform-origin: 64px 12px; animation: moonGlow 1.6s ease-in-out infinite; }
+  #busy .dome { transform-origin: 64px 60px; animation: domePulse 1.6s ease-in-out infinite; }
+  #busy .bar { width: 120px; height: 4px; border-radius: 4px; background: var(--accent-weak); overflow: hidden; }
+  #busy .bar::after { content: ""; display: block; width: 40%; height: 100%; border-radius: 4px; background: var(--accent); animation: barRun 1.1s ease-in-out infinite; }
+  @keyframes moonGlow { 50% { transform: scale(1.18); filter: drop-shadow(0 0 6px rgba(212,160,23,.8)); } }
+  @keyframes domePulse { 50% { transform: scale(1.04); } }
+  @keyframes barRun { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+  @media (prefers-reduced-motion: reduce) { #busy .moon, #busy .dome, #busy .bar::after { animation: none; } }
+
   #toast { position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 14px; border-radius: var(--r); display: none; z-index: 100; font-size: 13px; }
 </style>
 </head>
 <body>
+<!-- full-screen loading: shown while any server call (except the star toggle) is running -->
+<div id="busy" role="status" aria-live="polite">
+  <div class="bx">
+    <svg viewBox="0 0 128 112" aria-hidden="true">
+      <path class="moon" d="M64 2a9 9 0 1 0 7.5 14A7 7 0 1 1 64 2z"/>
+      <rect class="mq" x="63" y="18" width="2" height="8" rx="1"/>
+      <g class="dome"><path class="mq" d="M64 24c-17 4-27 16-27 32h54c0-16-10-28-27-32z"/></g>
+      <rect class="mq" x="12" y="30" width="10" height="72" rx="2"/><path class="mq" d="M17 14l7 16H10z"/><rect class="mq" x="9" y="44" width="16" height="3" rx="1"/>
+      <rect class="mq" x="106" y="30" width="10" height="72" rx="2"/><path class="mq" d="M111 14l7 16h-14z"/><rect class="mq" x="103" y="44" width="16" height="3" rx="1"/>
+      <rect class="mq" x="30" y="56" width="68" height="46" rx="2"/>
+      <path class="door" d="M56 102V84a8 8 0 0 1 16 0v18z"/>
+      <path class="door" d="M38 76v-6a4 4 0 0 1 8 0v6zM82 76v-6a4 4 0 0 1 8 0v6z"/>
+      <rect class="mq" x="4" y="102" width="120" height="6" rx="2"/>
+    </svg>
+    <div class="bar"></div>
+    <span id="busyMsg">Loading…</span>
+  </div>
+</div>
 
 
 <div class="auth" id="auth" hidden>
@@ -439,7 +473,17 @@
 
   // Inside Apps Script use google.script.run; on the external site (pmwa.jo3.org) POST to the web app.
   const API_URL = 'https://script.google.com/macros/s/AKfycbxyFrcT4zyjNyPCyDmzkNbttHrLOcsJ0eK2tTgSTsQh0-sSF42Jihrl8cqd5vGamaOYGA/exec';
+  // Every server call shows the full-screen loader (counted, so overlapping calls keep it up);
+  // the star toggle is optimistic and stays quiet.
+  const QUIET = ['setFavourite'];
+  let busyN = 1; // the page starts covered until the first session check is done
+  function busy(on) { busyN = Math.max(0, busyN + (on ? 1 : -1)); $('busy').hidden = busyN === 0; }
   function call(fn, ...args) {
+    if (QUIET.includes(fn)) return rawCall(fn, ...args);
+    busy(true);
+    return rawCall(fn, ...args).finally(() => busy(false));
+  }
+  function rawCall(fn, ...args) {
     if (window.google && google.script && google.script.run) {
       return new Promise((resolve, reject) => google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn](...args));
     }
@@ -861,6 +905,7 @@
       const st = await call('authStatus', token);
       if (st.me) showApp(); else { setToken(''); showAuth(st.needsSetup); }
     } catch (e) { showAuth(false); $('authWarn').textContent = e.message; }
+    finally { busy(false); }
   })();
 </script>
 </body>
