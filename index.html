@@ -127,7 +127,9 @@
   .msg { padding: 40px; text-align: center; color: var(--ink-2); background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
 
   @media (max-width: 760px) {
-    .top { padding: 8px 12px; }
+    .top { padding: 8px 12px; flex-wrap: nowrap; gap: 8px; }
+    .top .brand { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .top .avatar-btn { flex: none; }
     .filters { padding: 8px 12px; }
     .filters .f, .filters .f.wide { flex: 1 1 45%; min-width: 0; }
     .summary, .wrap { padding-left: 12px; padding-right: 12px; }
@@ -139,6 +141,7 @@
     .btn .lbl { display: none; }
   }
   .tags-m { display: none; }
+  #btnAdd .lbl-m { display: none; }
 
   /* ---------- "No address" switch ---------- */
   .switch { display: inline-flex; align-items: center; gap: 8px; height: var(--h); cursor: pointer; user-select: none; color: var(--ink-2); font-weight: 500; white-space: nowrap; }
@@ -221,7 +224,8 @@
   @media (max-width: 760px) {
     .top .btn:not(#btnAdd), .who { display: none; }
     .avatar-btn { display: block; }
-    #btnAdd { width: 34px; height: 34px; padding: 0; justify-content: center; border-radius: 50%; }
+    #btnAdd { height: 34px; padding: 0 14px; justify-content: center; border-radius: 999px; font-weight: 600; }
+    #btnAdd .lbl-m { display: inline; }
     td.acts .act { display: grid; margin: 0 0 4px auto; width: 30px; height: 26px; }
     td.acts .act:last-child { margin-bottom: 0; }
     td.acts { padding-left: 4px; }
@@ -344,7 +348,7 @@
   <button class="btn" id="btnUsers" hidden title="Users"><i class="fa-solid fa-users"></i><span class="lbl">Users</span></button>
   <button class="btn" id="btnPw" title="Change password"><i class="fa-solid fa-key"></i></button>
   <button class="btn" id="btnLogout" title="Sign out"><i class="fa-solid fa-right-from-bracket"></i></button>
-  <button class="btn primary" id="btnAdd" hidden><i class="fa-solid fa-plus"></i><span class="lbl">Add contact</span></button>
+  <button class="btn primary" id="btnAdd" hidden><i class="fa-solid fa-plus"></i><span class="lbl">Add contact</span><span class="lbl-m">New</span></button>
   <button class="avatar-btn" id="btnMenu" title="Menu" aria-haspopup="true"><span class="av" id="avTop">?</span></button>
 </div>
 
